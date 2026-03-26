@@ -3,8 +3,16 @@ from sqlalchemy.orm import Session
 from .models.database import SessionLocal, init_db, InsightMetadata
 from .core.security import generate_new_key, encrypt_content
 import datetime
+from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI()
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # Initialize DB on startup
 init_db()

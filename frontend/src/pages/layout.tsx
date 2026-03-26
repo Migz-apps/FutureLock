@@ -1,21 +1,17 @@
-import '@/styles/globals.css';
-import '@rainbow-me/rainbowkit/styles.css';
-import type { AppProps } from 'next/app';
-import { RainbowKitProvider, darkTheme } from '@rainbow-me/rainbowkit';
-import { WagmiProvider } from 'wagmi';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { config } from '../wagmi';
+import React from 'react';
+import Navbar from '../components/Navbar';
 
-const queryClient = new QueryClient();
+interface LayoutProps {
+  children: React.ReactNode;
+}
 
-export default function App({ Component, pageProps }: AppProps) {
+export default function Layout({ children }: LayoutProps) {
   return (
-    <WagmiProvider config={config}>
-      <QueryClientProvider client={queryClient}>
-        <RainbowKitProvider theme={darkTheme()}>
-          <Component {...pageProps} />
-        </RainbowKitProvider>
-      </QueryClientProvider>
-    </WagmiProvider>
+    <div style={{ backgroundColor: '#000', minHeight: '100vh', color: '#fff' }}>
+      <Navbar />
+      <main>
+        {children}
+      </main>
+    </div>
   );
 }
