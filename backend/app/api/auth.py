@@ -23,7 +23,12 @@ class LoginData(BaseModel):
     email: str
     password: str
 
+class WalletLoginData(BaseModel):
+    wallet_address: str
+    role: str
+
 @router.post("/signup")
+@router.post("/register")
 def signup(data: SignupData, response: Response, db: Session = Depends(get_db)):
     user = db.query(User).filter(User.email == data.email).first()
     if user:
@@ -42,12 +47,12 @@ def signup(data: SignupData, response: Response, db: Session = Depends(get_db)):
     response.set_cookie(key="access_token", value=access_token, httponly=True, max_age=15*60, samesite='lax')
     response.set_cookie(key="refresh_token", value=refresh_token, httponly=True, max_age=7*24*60*60, samesite='lax')
     
-    return {"message": "Signup successful", "role": new_user.role}
+    return {"message": "Signup successful", "role": new_user.role, "identityType": "email", "identity": data.email}
 
 @router.post("/login")
 def login(data: LoginData, response: Response, db: Session = Depends(get_db)):
     user = db.query(User).filter(User.email == data.email).first()
-    if not user or not verify_password(data.password, user.hashed_password):
+    if not user or not user.hashed_password or not verify_password(data.password, user.hashed_password):
         raise HTTPException(status_code=400, detail="Incorrect email or password")
     
     access_token = create_access_token(subject=user.email)
@@ -56,7 +61,27 @@ def login(data: LoginData, response: Response, db: Session = Depends(get_db)):
     response.set_cookie(key="access_token", value=access_token, httponly=True, max_age=15*60, samesite='lax')
     response.set_cookie(key="refresh_token", value=refresh_token, httponly=True, max_age=7*24*60*60, samesite='lax')
     
-    return {"message": "Login successful", "role": user.role}
+    return {"message": "Login successful", "role": user.role, "identityType": "email", "identity": data.email}
+
+@router.post("/wallet-login")
+def wallet_login(data: WalletLoginData, response: Response, db: Session = Depends(get_db)):
+    user = db.query(User).filter(User.wallet_address == data.wallet_address).first()
+    if not user:
+        # Register user on first wallet login automatically
+        user = User(wallet_address=data.wallet_address, role=data.role)
+        db.add(user)
+        db.commit()
+        db.refresh(user)
+    
+    # Normally, Nonce generation and signature verification go here
+    # For now, we simulate verified access
+    access_token = create_access_token(subject=user.wallet_address)
+    refresh_token = create_refresh_token(subject=user.wallet_address)
+    
+    response.set_cookie(key="access_token", value=access_token, httponly=True, max_age=15*60, samesite='lax')
+    response.set_cookie(key="refresh_token", value=refresh_token, httponly=True, max_age=7*24*60*60, samesite='lax')
+    
+    return {"message": "Wallet login successful", "role": user.role, "identityType": "wallet", "identity": data.wallet_address}
 
 @router.post("/refresh")
 def refresh_token(request: Request, response: Response, db: Session = Depends(get_db)):
@@ -68,12 +93,15 @@ def refresh_token(request: Request, response: Response, db: Session = Depends(ge
     if not payload or not payload.get("refresh"):
         raise HTTPException(status_code=401, detail="Invalid refresh token")
         
-    user_email = payload.get("sub")
-    user = db.query(User).filter(User.email == user_email).first()
+    subject = payload.get("sub")
+    
+    # Try email first, then wallet
+    user = db.query(User).filter((User.email == subject) | (User.wallet_address == subject)).first()
     if not user:
         raise HTTPException(status_code=401, detail="User not found")
         
-    access_token = create_access_token(subject=user.email)
+    identifier = user.email if user.email else user.wallet_address
+    access_token = create_access_token(subject=identifier)
     response.set_cookie(key="access_token", value=access_token, httponly=True, max_age=15*60, samesite='lax')
     
     return {"message": "Token refreshed"}
@@ -87,15 +115,23 @@ def get_current_user(request: Request, db: Session = Depends(get_db)):
     if not payload:
         raise HTTPException(status_code=401, detail="Invalid access token")
         
-    email = payload.get("sub")
-    user = db.query(User).filter(User.email == email).first()
+    subject = payload.get("sub")
+    
+    user = db.query(User).filter((User.email == subject) | (User.wallet_address == subject)).first()
     if not user:
         raise HTTPException(status_code=401, detail="User not found")
         
-    return {"email": user.email, "role": user.role}
+    identity_type = "email" if user.email else "wallet"
+    identity = user.email or user.wallet_address
+    return {
+        "role": user.role,
+        "identityType": identity_type,
+        "identity": identity
+    }
 
 @router.post("/logout")
 def logout(response: Response):
     response.delete_cookie("access_token")
     response.delete_cookie("refresh_token")
     return {"message": "Logged out successfully"}
+

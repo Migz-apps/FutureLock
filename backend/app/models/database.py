@@ -24,13 +24,15 @@ class InsightMetadata(Base):
     creator_address = Column(String)
     price = Column(String, default="0.01") # Added price field
     is_encrypted = Column(Boolean, default=True)
+    category = Column(String, default="All") # Hybrid Market Filter
 
 class User(Base):
     __tablename__ = "users"
 
     id = Column(Integer, primary_key=True, index=True)
-    email = Column(String, unique=True, index=True)
-    hashed_password = Column(String)
+    email = Column(String, unique=True, index=True, nullable=True) # Web2 Identity
+    hashed_password = Column(String, nullable=True)
+    wallet_address = Column(String, unique=True, index=True, nullable=True) # Web3 Identity
     role = Column(String) # "Creator" or "Buyer"
 
 def init_db():

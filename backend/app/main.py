@@ -20,8 +20,9 @@ init_db()
 
 from .api import auth
 
-# Mount auth router
+# Mount auth router (support both legacy and v1 APIs)
 app.include_router(auth.router, prefix="/auth")
+app.include_router(auth.router, prefix="/api/v1/auth")
 
 def get_db():
     db = SessionLocal()
@@ -58,3 +59,29 @@ async def create_insight(
         "cid": mock_cid,
         "unlock_at": unlockDate
     }
+
+@app.get("/api/v1/intel/public")
+async def get_public_insights(db: Session = Depends(get_db)):
+    # Returns public metadata for all items.
+    insights = db.query(InsightMetadata).all()
+    result = []
+    for ins in insights:
+        # Calculate days until unlock
+        if ins.unlock_time:
+            delta = ins.unlock_time - datetime.datetime.now()
+            days = max(0, delta.days)
+        else:
+            days = 0
+            
+        result.append({
+            "id": str(ins.id),
+            "title": ins.title,
+            "description": ins.description,
+            "priceETH": ins.price,
+            "priceUSD": str(float(ins.price) * 3000) if ins.price.replace('.','',1).isdigit() else "30.00",
+            "category": getattr(ins, "category", "All"),
+            "creator": ins.creator_address,
+            "unlockDays": days
+        })
+        
+    return result
