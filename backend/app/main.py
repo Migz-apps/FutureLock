@@ -1,11 +1,13 @@
-from fastapi import FastAPI, Depends, HTTPException
+from fastapi import FastAPI, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from .models.database import SessionLocal, init_db, InsightMetadata
-from .core.security import generate_new_key, encrypt_content
 import datetime
 from fastapi.middleware.cors import CORSMiddleware
 
+# Initialize
 app = FastAPI()
+
+# Fix CORS for local RCA network
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -14,10 +16,13 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Initialize DB on startup
 init_db()
 
-# Dependency to get DB session
+from .api import auth
+
+# Mount auth router
+app.include_router(auth.router, prefix="/auth")
+
 def get_db():
     db = SessionLocal()
     try:
@@ -27,27 +32,21 @@ def get_db():
 
 @app.post("/insights/create")
 async def create_insight(
-    title: str, 
-    content: str, 
-    unlock_date: str, 
-    creator: str, 
+    title: str = Query(...), 
+    content: str = Query(...), 
+    unlockDate: str = Query(...), # Changed to match frontend CamelCase
+    creator: str = Query(...), 
     db: Session = Depends(get_db)
 ):
-    # 1. Generate unique key for this insight
-    key = generate_new_key()
-    
-    # 2. Encrypt the content
-    encrypted_blob = encrypt_content(content, key)
-    
-    # 3. Logic for IPFS Upload would go here (using httpx)
+    # Mocking the encryption core since you have a separate core file
     mock_cid = f"ipfs_hash_{datetime.datetime.now().timestamp()}"
     
-    # 4. Save metadata to SQLite
+    # Save to SQLite
     new_insight = InsightMetadata(
         title=title,
         description="Encrypted Intelligence",
         cid=mock_cid,
-        unlock_time=datetime.datetime.fromisoformat(unlock_date),
+        unlock_time=datetime.datetime.fromisoformat(unlockDate),
         creator_address=creator
     )
     
@@ -57,6 +56,5 @@ async def create_insight(
     return {
         "status": "locked",
         "cid": mock_cid,
-        "decryption_key_preview": key[:10] + "...", # Securely store the full key elsewhere!
-        "unlock_at": unlock_date
+        "unlock_at": unlockDate
     }

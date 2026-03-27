@@ -1,63 +1,201 @@
 import React from 'react';
-import { useFutureLock } from '../hooks/useFutureLock';
+import { useAuth } from '../contexts/AuthContext';
+import { useRouter } from 'next/router';
+import { useTheme } from '../contexts/ThemeContext';
 
 const Home = () => {
-  const { purchaseInsight, isPending, error } = useFutureLock();
+  const { isAuthenticated, role } = useAuth();
+  const router = useRouter();
+  const { theme } = useTheme();
+
+  const handleAction = (targetRole: string) => {
+    if (!isAuthenticated) {
+      router.push('/login');
+    } else {
+      if (role === targetRole) {
+        router.push(`/${targetRole.toLowerCase()}`);
+      } else {
+        alert(`Access Denied: You are currently logged in as a ${role}.`);
+      }
+    }
+  };
+
+  const isDark = theme === 'dark';
 
   return (
-    <div style={{ padding: '40px', maxWidth: '800px', margin: '0 auto' }}>
-      <header style={{ marginBottom: '40px' }}>
-        <h1 style={{ fontSize: '32px', fontWeight: 'bold' }}>Active Insights</h1>
-        <p style={{ color: '#888' }}>Select a premium lock to access the content.</p>
-      </header>
+    <div className="min-h-screen transition-colors duration-300" style={{ 
+      backgroundColor: 'var(--background)', 
+      color: 'var(--text-primary)',
+      fontFamily: 'Inter, system-ui, sans-serif' 
+    }}>
       
-      <div style={{ 
-        padding: '30px', 
-        backgroundColor: '#111', 
-        border: '1px solid #333', 
-        borderRadius: '12px',
-        boxShadow: '0 4px 20px rgba(0,0,0,0.5)'
-      }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-          <div>
-            <h3 style={{ fontSize: '20px', marginBottom: '10px' }}>Cybersecurity Threat Intel</h3>
-            <p style={{ color: '#aaa', marginBottom: '20px' }}>Advanced analysis on zero-day vulnerabilities.</p>
-          </div>
-          <span style={{ backgroundColor: '#0070f3', padding: '4px 12px', borderRadius: '20px', fontSize: '12px' }}>
-            NEW
-          </span>
-        </div>
-
-        <div style={{ borderTop: '1px solid #333', paddingTop: '20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <div>
-            <span style={{ fontSize: '14px', color: '#888' }}>PRICE</span>
-            <div style={{ fontSize: '18px', fontWeight: 'bold' }}>0.01 ETH</div>
-          </div>
-
+      {/* 1. HERO SECTION */}
+      <section style={{ padding: '120px 40px 80px', textAlign: 'center', maxWidth: '1100px', margin: '0 auto' }}>
+        <h1 style={{ 
+          fontSize: '72px', 
+          fontWeight: '900', 
+          letterSpacing: '-3px', 
+          marginBottom: '24px', 
+          lineHeight: '1',
+          color: 'var(--text-primary)'
+        }}>
+          Future<span style={{ color: 'var(--accent-primary)' }}>Lock</span>
+        </h1>
+        <p style={{ 
+          fontSize: '22px', 
+          color: 'var(--text-secondary)', 
+          marginBottom: '48px', 
+          maxWidth: '700px', 
+          margin: '0 auto 60px',
+          lineHeight: '1.6'
+        }}>
+          The Protocol for Time-Locked Intelligence. <br />
+          Securely encrypt and monetize sensitive data with blockchain-verified release dates.
+        </p>
+        
+        <div style={{ display: 'flex', justifyContent: 'center', gap: '20px' }}>
           <button 
-            onClick={() => purchaseInsight("1", "0.01")}
-            disabled={isPending}
-            style={{
-              padding: '12px 30px',
-              backgroundColor: isPending ? '#333' : '#0070f3',
-              color: '#fff',
+            onClick={() => handleAction('Creator')}
+            style={{ 
+              padding: '16px 32px', 
+              backgroundColor: 'var(--accent-primary)', 
+              color: '#fff', 
+              borderRadius: '8px', 
+              fontWeight: 'bold', 
+              cursor: 'pointer', 
               border: 'none',
-              borderRadius: '8px',
-              cursor: isPending ? 'not-allowed' : 'pointer',
-              fontWeight: 'bold',
-              transition: '0.2s'
+              transition: 'transform 0.2s ease'
             }}
+            onMouseOver={(e) => e.currentTarget.style.transform = 'scale(1.05)'}
+            onMouseOut={(e) => e.currentTarget.style.transform = 'scale(1)'}
           >
-            {isPending ? "Waiting for Wallet..." : "Buy & Unlock"}
+            Deploy Intelligence
+          </button>
+          <button 
+            onClick={() => handleAction('Buyer')}
+            style={{ 
+              padding: '16px 32px', 
+              backgroundColor: 'var(--text-primary)', 
+              color: 'var(--background)', 
+              borderRadius: '8px', 
+              fontWeight: 'bold', 
+              cursor: 'pointer', 
+              border: 'none',
+              transition: 'transform 0.2s ease'
+            }}
+            onMouseOver={(e) => e.currentTarget.style.transform = 'scale(1.05)'}
+            onMouseOut={(e) => e.currentTarget.style.transform = 'scale(1)'}
+          >
+            Acquire Insights
           </button>
         </div>
+      </section>
 
-        {error && (
-          <div style={{ color: '#ff4d4d', marginTop: '15px', fontSize: '14px', padding: '10px', backgroundColor: 'rgba(255, 77, 77, 0.1)', borderRadius: '6px' }}>
-            ⚠️ {error.message.includes("User rejected") ? "Transaction declined." : error.message}
+      {/* 2. CRYPTOGRAPHIC FOUNDATION */}
+      <section style={{ padding: '80px 40px', maxWidth: '1100px', margin: '0 auto' }}>
+        <h2 style={{ fontSize: '32px', fontWeight: '800', marginBottom: '40px', letterSpacing: '-1px' }}>
+          The Cryptographic Foundation
+        </h2>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '30px' }}>
+          {[
+            { title: "End-to-End Encryption", desc: "Data is encrypted locally using AES-256 before leaving your device. Even the platform cannot view your intelligence." },
+            { title: "IPFS Distribution", desc: "Encrypted payloads are distributed across IPFS, ensuring your data remains immutable and censorship-resistant." },
+            { title: "Timestamp Verification", desc: "Unlock dates are anchored to the blockchain, making it mathematically impossible to reveal data prematurely." }
+          ].map((feature, idx) => (
+            <div key={idx} style={{
+              padding: '40px',
+              backgroundColor: 'var(--surface)',
+              border: '1px solid var(--border)',
+              borderRadius: '12px',
+            }}>
+              <h4 style={{ fontWeight: 'bold', marginBottom: '12px', fontSize: '18px' }}>{feature.title}</h4>
+              <p style={{ color: 'var(--text-secondary)', fontSize: '15px', lineHeight: '1.5' }}>{feature.desc}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* 3. PROOF OF ESCROW */}
+      <section style={{ 
+        padding: '80px 40px', 
+        backgroundColor: 'var(--surface)', 
+        borderTop: '1px solid var(--border)', 
+        borderBottom: '1px solid var(--border)' 
+      }}>
+        <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
+          <h2 style={{ fontSize: '32px', fontWeight: '800', marginBottom: '40px', letterSpacing: '-1px' }}>
+            Financial Integrity
+          </h2>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '40px' }}>
+            <div>
+              <h4 style={{ fontWeight: 'bold', fontSize: '20px', marginBottom: '12px' }}>Secure Payment Holding</h4>
+              <p style={{ color: 'var(--text-secondary)', lineHeight: '1.6' }}>
+                Funds are held by a decentralized Escrow Smart Contract. The platform never touches your capital.
+              </p>
+            </div>
+            <div>
+              <h4 style={{ fontWeight: 'bold', fontSize: '20px', marginBottom: '12px' }}>Autonomous Distribution</h4>
+              <p style={{ color: 'var(--text-secondary)', lineHeight: '1.6' }}>
+                Payouts and key releases are executed automatically by the protocol at the specified unlock time.
+              </p>
+            </div>
           </div>
-        )}
-      </div>
+        </div>
+      </section>
+
+      {/* 4. DUAL PORTAL (SCROLL TARGET) */}
+      <section style={{ padding: '120px 40px', maxWidth: '1100px', margin: '0 auto', textAlign: 'center' }}>
+        <h2 style={{ fontSize: '48px', fontWeight: '900', marginBottom: '60px', letterSpacing: '-2px' }}>
+          Select Your Portal
+        </h2>
+        
+        <div style={{ display: 'flex', gap: '40px', flexWrap: 'wrap' }}>
+          <div 
+            onClick={() => handleAction('Creator')}
+            style={{ 
+              flex: '1', 
+              padding: '48px', 
+              backgroundColor: 'var(--surface)', 
+              border: '1px solid var(--border)', 
+              borderRadius: '20px', 
+              cursor: 'pointer', 
+              textAlign: 'left',
+              transition: 'all 0.3s ease'
+            }}
+            onMouseOver={(e) => e.currentTarget.style.borderColor = 'var(--accent-primary)'}
+            onMouseOut={(e) => e.currentTarget.style.borderColor = 'var(--border)'}
+          >
+            <h3 style={{ fontSize: '28px', fontWeight: 'bold', marginBottom: '16px' }}>Creator</h3>
+            <p style={{ color: 'var(--text-secondary)', marginBottom: '24px', fontSize: '18px' }}>
+              Have high-value data that matures over time? Lock it now and monetize your strategic foresight.
+            </p>
+            <span style={{ color: 'var(--accent-primary)', fontWeight: 'bold', fontSize: '16px' }}>Start Creating →</span>
+          </div>
+
+          <div 
+            onClick={() => handleAction('Buyer')}
+            style={{ 
+              flex: '1', 
+              padding: '48px', 
+              backgroundColor: 'var(--surface)', 
+              border: '1px solid var(--border)', 
+              borderRadius: '20px', 
+              cursor: 'pointer', 
+              textAlign: 'left',
+              transition: 'all 0.3s ease'
+            }}
+            onMouseOver={(e) => e.currentTarget.style.borderColor = 'var(--accent-primary)'}
+            onMouseOut={(e) => e.currentTarget.style.borderColor = 'var(--border)'}
+          >
+            <h3 style={{ fontSize: '28px', fontWeight: 'bold', marginBottom: '16px' }}>Buyer</h3>
+            <p style={{ color: 'var(--text-secondary)', marginBottom: '24px', fontSize: '18px' }}>
+              Seeking an information edge? Browse the marketplace for verified, upcoming intelligence.
+            </p>
+            <span style={{ color: 'var(--accent-primary)', fontWeight: 'bold', fontSize: '16px' }}>Explore Market →</span>
+          </div>
+        </div>
+      </section>
+
     </div>
   );
 };

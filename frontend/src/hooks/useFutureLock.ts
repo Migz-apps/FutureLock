@@ -1,35 +1,52 @@
 "use client";
 
-import { useWriteContract } from 'wagmi';
+import { useChainId, useWriteContract } from 'wagmi';
 import { parseEther } from 'viem';
 import FutureLockABI from '../abis/FutureLock.json';
 
+// Configuration from environment variables
 const CONTRACT_ADDRESS = (process.env.NEXT_PUBLIC_CONTRACT_ADDRESS || "0x0") as `0x${string}`;
+// Unified the variable name to match your .env.local
+const EXPECTED_CHAIN_ID = Number(process.env.NEXT_PUBLIC_CHAIN_ID || 31337);
 
 export const useFutureLock = () => {
+  const chainId = useChainId();
   const { writeContract, isPending, error, data: hash } = useWriteContract();
 
+  /**
+   * Triggers the smart contract transaction to purchase an insight.
+   * @param insightId - The ID of the insight from the smart contract/database.
+   * @param priceInEth - The cost in ETH (e.g., "0.01").
+   */
   const purchaseInsight = async (insightId: string, priceInEth: string) => {
+    // 1. Network Validation
+    if (chainId !== EXPECTED_CHAIN_ID) {
+      const errorMsg = `Wrong Network! Please switch to Chain ID: ${EXPECTED_CHAIN_ID}`;
+      console.error(errorMsg);
+      alert(errorMsg);
+      return;
+    }
+
+    // 2. Contract Address Validation
     if (!CONTRACT_ADDRESS || CONTRACT_ADDRESS === "0x0") {
-      console.error("Contract address is missing in .env.local");
+      console.error("Critical Error: Contract address is missing in .env.local");
       return;
     }
 
     try {
-      // We cast the entire configuration object to 'any' to stop the 
-      // ts(2345) error. This is the only way to stop Wagmi from 
-      // over-validating the ABI against the function name.
-      const contractConfig: any = {
+      // 3. Execute Transaction
+      // We cast to 'any' to prevent Wagmi from trying to deep-validate 
+      // the ABI against the function name at compile time.
+      writeContract({
         address: CONTRACT_ADDRESS,
-        abi: FutureLockABI.abi,
+        abi: FutureLockABI.abi as any,
         functionName: 'purchaseInsight',
         args: [BigInt(insightId)],
         value: parseEther(priceInEth),
-      };
+      } as any);
 
-      writeContract(contractConfig);
     } catch (err) {
-      console.error("Transaction initiation failed:", err);
+      console.error("Failed to initiate transaction:", err);
     }
   };
 
