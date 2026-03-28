@@ -15,6 +15,8 @@ interface IntelMetadata {
     category: string;
     creator: string;
     unlockDays: number;
+    trustScore?: number;
+    ratingsCount?: number;
 }
 
 const Marketplace = () => {
@@ -46,9 +48,9 @@ const Marketplace = () => {
 
                 if (isMounted) {
                     setIntelList([
-                        { id: '0x123', title: 'Cybersecurity Threat Intel Q3', description: 'Advanced analysis on zero-day vulnerabilities in common infrastructure.', priceETH: '0.01', priceUSD: '30.00', category: 'Security', creator: '0xSecOps', unlockDays: 3 },
-                        { id: '0x124', title: 'Q4 Market Quantitative Model', description: 'Proprietary algorithmic model predicting asset volatility in tech sector.', priceETH: '0.05', priceUSD: '150.00', category: 'Finance', creator: 'QuantAlpha', unlockDays: 7 },
-                        { id: '0x125', title: 'Next-Gen Battery Tech Patents Analysis', description: 'Deep dive into unreleased solid-state battery tech patents.', priceETH: '0.02', priceUSD: '60.00', category: 'Tech', creator: 'TechInsider', unlockDays: 14 }
+                        { id: '0x123', title: 'Cybersecurity Threat Intel Q3', description: 'Advanced analysis on zero-day vulnerabilities in common infrastructure.', priceETH: '0.01', priceUSD: '30.00', category: 'Security', creator: '0xsecops', unlockDays: 0.5, trustScore: 4.8, ratingsCount: 112 },
+                        { id: '0x124', title: 'Q4 Market Quantitative Model', description: 'Proprietary algorithmic model predicting asset volatility in tech sector.', priceETH: '0.05', priceUSD: '150.00', category: 'Finance', creator: 'quantalpha', unlockDays: 12, trustScore: 4.2, ratingsCount: 45 },
+                        { id: '0x125', title: 'Next-Gen Battery Tech Patents Analysis', description: 'Deep dive into unreleased solid-state battery tech patents.', priceETH: '0.02', priceUSD: '60.00', category: 'Tech', creator: 'techinsider', unlockDays: 5, trustScore: 5.0, ratingsCount: 8 }
                     ]);
                     setLoading(false);
                 }
@@ -104,6 +106,23 @@ const Marketplace = () => {
         return matchesSearch && matchesCategory;
     });
 
+    const formatCountdown = (days: number) => {
+        if (days > 10) {
+            return { text: `Opens in ${Math.ceil(days)}d`, style: { backgroundColor: 'rgba(76, 175, 80, 0.1)', color: '#4caf50' } };
+        } else if (days >= 1 && days <= 10) {
+            return { text: `Opens in ${Math.ceil(days)}d`, style: { backgroundColor: 'rgba(255, 152, 0, 0.1)', color: '#ff9800' } };
+        } else {
+            // Under 1 day is red and urgent ticking format
+            const hours = Math.floor(days * 24);
+            const mins = Math.floor((days * 24 * 60) % 60);
+            const secs = Math.floor((days * 24 * 60 * 60) % 60);
+            return {
+                text: `${hours.toString().padStart(2, '0')} : ${mins.toString().padStart(2, '0')} : ${secs.toString().padStart(2, '0')}`,
+                style: { backgroundColor: 'rgba(244, 67, 54, 0.1)', color: '#f44336', animation: 'pulse-fast 1s infinite' }
+            };
+        }
+    };
+
     return (
         <div style={{ padding: '60px 40px', maxWidth: '1000px', margin: '0 auto', color: isDark ? '#fff' : '#000', minHeight: '100vh', backgroundColor: isDark ? '#000' : '#fff' }}>
             <h1 style={{ fontSize: '36px', fontWeight: '900', marginBottom: '10px', letterSpacing: '-1px' }}>Open Intelligence Market</h1>
@@ -146,51 +165,67 @@ const Marketplace = () => {
                         </div>
                     ))
                 ) : (
-                    filteredList.map(item => (
-                        <div key={item.id} style={{
-                            padding: '30px',
-                            backgroundColor: 'var(--surface)',
-                            border: `1px solid ${isDark ? '#333' : '#eee'}`,
-                            borderRadius: '16px',
-                            boxShadow: isDark ? '0 10px 30px rgba(0,0,0,0.3)' : '0 10px 30px rgba(0,0,0,0.03)',
-                            display: 'flex',
-                            flexDirection: 'column',
-                            transition: 'transform 0.2s',
-                        }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '15px' }}>
-                                <span style={{ fontSize: '13px', color: 'var(--accent-primary)', fontWeight: 'bold', textTransform: 'uppercase' }}>{item.category}</span>
-                                <span style={{ backgroundColor: 'rgba(255,179,71,0.1)', color: '#ffb347', padding: '4px 10px', borderRadius: '12px', fontSize: '12px', fontWeight: 'bold' }}>
-                                    Opens in {item.unlockDays}d
-                                </span>
-                            </div>
-                            <h3 style={{ fontSize: '20px', marginBottom: '10px', lineHeight: '1.4' }}>{item.title}</h3>
-                            <p style={{ color: 'var(--text-secondary)', marginBottom: '25px', fontSize: '14px', lineHeight: '1.6', flex: 1 }}>{item.description}</p>
-
-                            <div style={{ borderTop: `1px solid ${isDark ? '#333' : '#eee'}`, paddingTop: '20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                                <div>
-                                    <div style={{ fontSize: '18px', fontWeight: 'bold' }}>{item.priceETH} ETH</div>
-                                    <div style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>~${item.priceUSD}</div>
+                    filteredList.map(item => {
+                        const countdownBadge = formatCountdown(item.unlockDays);
+                        return (
+                            <div key={item.id} style={{
+                                padding: '30px',
+                                backgroundColor: 'var(--surface)',
+                                border: `1px solid ${isDark ? '#333' : '#eee'}`,
+                                borderRadius: '16px',
+                                boxShadow: isDark ? '0 10px 30px rgba(0,0,0,0.3)' : '0 10px 30px rgba(0,0,0,0.03)',
+                                display: 'flex',
+                                flexDirection: 'column',
+                                transition: 'transform 0.2s',
+                            }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '15px' }}>
+                                    <div>
+                                        <span style={{ fontSize: '13px', color: 'var(--accent-primary)', fontWeight: 'bold', textTransform: 'uppercase' }}>{item.category}</span>
+                                        <div style={{ fontSize: '12px', color: isDark ? '#888' : '#aaa', marginTop: '4px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                            <span>@{item.creator}</span>
+                                            {item.trustScore !== undefined && (
+                                                <span style={{ display: 'flex', alignItems: 'center', color: '#FFD700', opacity: 0.9 }}>
+                                                    ★ {item.trustScore.toFixed(1)}
+                                                    <span style={{ color: isDark ? '#666' : '#999', marginLeft: '4px', fontSize: '10px' }}>
+                                                        ({item.ratingsCount})
+                                                    </span>
+                                                </span>
+                                            )}
+                                        </div>
+                                    </div>
+                                    <span style={{ ...countdownBadge.style, padding: '4px 10px', borderRadius: '12px', fontSize: '12px', fontWeight: 'bold' }}>
+                                        {countdownBadge.text}
+                                    </span>
                                 </div>
-                                <button
-                                    onClick={() => handleBuyClick(item)}
-                                    disabled={isPending}
-                                    style={{
-                                        padding: '10px 24px',
-                                        backgroundColor: isPending ? '#555' : 'var(--accent-primary)',
-                                        color: '#fff',
-                                        border: 'none',
-                                        borderRadius: '8px',
-                                        cursor: isPending ? 'not-allowed' : 'pointer',
-                                        fontWeight: 'bold',
-                                        transition: 'all 0.2s',
-                                        fontSize: '15px'
-                                    }}
-                                >
-                                    View / Buy
-                                </button>
+                                <h3 style={{ fontSize: '20px', marginBottom: '10px', lineHeight: '1.4' }}>{item.title}</h3>
+                                <p style={{ color: 'var(--text-secondary)', marginBottom: '25px', fontSize: '14px', lineHeight: '1.6', flex: 1 }}>{item.description}</p>
+
+                                <div style={{ borderTop: `1px solid ${isDark ? '#333' : '#eee'}`, paddingTop: '20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                                    <div>
+                                        <div style={{ fontSize: '18px', fontWeight: 'bold' }}>{item.priceETH} ETH</div>
+                                        <div style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>~${item.priceUSD}</div>
+                                    </div>
+                                    <button
+                                        onClick={() => handleBuyClick(item)}
+                                        disabled={isPending}
+                                        style={{
+                                            padding: '10px 24px',
+                                            backgroundColor: isPending ? '#555' : 'var(--accent-primary)',
+                                            color: '#fff',
+                                            border: 'none',
+                                            borderRadius: '8px',
+                                            cursor: isPending ? 'not-allowed' : 'pointer',
+                                            fontWeight: 'bold',
+                                            transition: 'all 0.2s',
+                                            fontSize: '15px'
+                                        }}
+                                    >
+                                        View / Buy
+                                    </button>
+                                </div>
                             </div>
-                        </div>
-                    ))
+                        );
+                    })
                 )}
             </div>
 
@@ -199,6 +234,11 @@ const Marketplace = () => {
                 @keyframes pulse {
                     0% { opacity: 1; }
                     50% { opacity: 0.5; }
+                    100% { opacity: 1; }
+                }
+                @keyframes pulse-fast {
+                    0% { opacity: 1; }
+                    50% { opacity: 0.6; }
                     100% { opacity: 1; }
                 }
             `}</style>

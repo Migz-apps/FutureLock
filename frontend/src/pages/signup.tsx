@@ -3,12 +3,15 @@ import { useRouter } from 'next/router';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
 import Link from 'next/link';
+import CreatorCovenantModal from '../components/CreatorCovenantModal';
 
 const Signup = () => {
     const [activeTab, setActiveTab] = useState<'web3' | 'web2'>('web3');
+    const [username, setUsername] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [role, setRole] = useState('Buyer');
+    const [showCovenant, setShowCovenant] = useState(false);
     const { login, redirectUrl, setRedirectUrl } = useAuth();
     const router = useRouter();
     const { theme } = useTheme();
@@ -44,7 +47,29 @@ const Signup = () => {
         }
     };
 
+    const handleRoleSelect = (selectedRole: string) => {
+        if (selectedRole === 'Creator') {
+            setShowCovenant(true);
+        } else {
+            setRole(selectedRole);
+        }
+    };
+
+    const handleAcceptCovenant = () => {
+        setRole('Creator');
+        setShowCovenant(false);
+    };
+
+    const handleDeclineCovenant = () => {
+        setRole('Buyer');
+        setShowCovenant(false);
+    };
+
     const handleWalletConnect = async () => {
+        if (!username.trim()) {
+            alert('Please choose a username first.');
+            return;
+        }
         try {
             if (!(window as any).ethereum) {
                 alert('MetaMask or a Web3 wallet is required.');
@@ -104,6 +129,17 @@ const Signup = () => {
                 {activeTab === 'web3' ? (
                     <div style={{ textAlign: 'center', padding: '40px 0' }}>
                         <p style={{ marginBottom: '20px', color: isDark ? '#ccc' : '#444' }}>Connect your cryptographic wallet to register securely.</p>
+                        <div style={{ marginBottom: '20px', textAlign: 'left' }}>
+                            <label style={{ display: 'block', marginBottom: '8px', fontWeight: 'bold' }}>Choose Your Identity (Username)</label>
+                            <input
+                                type="text"
+                                value={username}
+                                onChange={e => setUsername(e.target.value.toLowerCase())}
+                                style={{ width: '100%', padding: '12px 16px', borderRadius: '8px', border: `1px solid ${isDark ? '#333' : '#ccc'}`, backgroundColor: isDark ? '#111' : '#f9f9f9', color: isDark ? '#fff' : '#000', outline: 'none' }}
+                                required
+                                placeholder="e.g. shadowbroker"
+                            />
+                        </div>
                         <button
                             onClick={handleWalletConnect}
                             style={{ padding: '16px 32px', backgroundColor: 'var(--accent-primary)', color: '#fff', border: 'none', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer', fontSize: '18px', width: '100%', transition: 'all 0.2s' }}
@@ -115,14 +151,14 @@ const Signup = () => {
                     <form onSubmit={handleEmailSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
                         <div style={{ display: 'flex', gap: '20px', marginBottom: '10px' }}>
                             <div
-                                onClick={() => setRole('Creator')}
+                                onClick={() => handleRoleSelect('Creator')}
                                 style={{ flex: 1, padding: '10px', textAlign: 'center', border: `2px solid ${role === 'Creator' ? 'var(--accent-primary)' : (isDark ? '#333' : '#ccc')}`, borderRadius: '12px', cursor: 'pointer', backgroundColor: role === 'Creator' ? 'rgba(0,112,243,0.1)' : 'transparent', transition: 'all 0.2s' }}
                             >
                                 <h3 style={{ margin: 0, fontSize: '18px' }}>Creator</h3>
                                 <p style={{ margin: '5px 0 0 0', fontSize: '12px', color: isDark ? '#aaa' : '#666' }}>Sell intel</p>
                             </div>
                             <div
-                                onClick={() => setRole('Buyer')}
+                                onClick={() => handleRoleSelect('Buyer')}
                                 style={{ flex: 1, padding: '10px', textAlign: 'center', border: `2px solid ${role === 'Buyer' ? 'var(--accent-primary)' : (isDark ? '#333' : '#ccc')}`, borderRadius: '12px', cursor: 'pointer', backgroundColor: role === 'Buyer' ? 'rgba(0,112,243,0.1)' : 'transparent', transition: 'all 0.2s' }}
                             >
                                 <h3 style={{ margin: 0, fontSize: '18px' }}>Buyer</h3>
@@ -130,6 +166,17 @@ const Signup = () => {
                             </div>
                         </div>
 
+                        <div>
+                            <label style={{ display: 'block', marginBottom: '8px', fontWeight: 'bold' }}>Username</label>
+                            <input
+                                type="text"
+                                value={username}
+                                onChange={e => setUsername(e.target.value.toLowerCase())}
+                                style={{ width: '100%', padding: '12px 16px', borderRadius: '8px', border: `1px solid ${isDark ? '#333' : '#ccc'}`, backgroundColor: isDark ? '#111' : '#f9f9f9', color: isDark ? '#fff' : '#000', outline: 'none' }}
+                                required
+                                placeholder="e.g. phantom"
+                            />
+                        </div>
                         <div>
                             <label style={{ display: 'block', marginBottom: '8px', fontWeight: 'bold' }}>Email</label>
                             <input
@@ -161,6 +208,11 @@ const Signup = () => {
                     Already have an account? <Link href={`/login${router.query.redirect ? `?redirect=${router.query.redirect}` : ''}`} style={{ color: 'var(--accent-primary)', textDecoration: 'none', fontWeight: 'bold' }}>Log in</Link>
                 </p>
             </div>
+            <CreatorCovenantModal
+                isOpen={showCovenant}
+                onAccept={handleAcceptCovenant}
+                onDecline={handleDeclineCovenant}
+            />
         </div>
     );
 };

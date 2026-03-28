@@ -1,8 +1,8 @@
-from fastapi import APIRouter, Depends, HTTPException, Response, Request
+from fastapi import APIRouter, Depends, HTTPException, Response, Request, status
 from sqlalchemy.orm import Session
 from ..models.database import User, SessionLocal
 from ..core.security import get_password_hash, verify_password, create_access_token, create_refresh_token, decode_token
-from pydantic import BaseModel
+from pydantic import BaseModel, field_validator
 import datetime
 
 router = APIRouter()
@@ -15,27 +15,42 @@ def get_db():
         db.close()
 
 class SignupData(BaseModel):
+    username: str
     email: str
     password: str
     role: str
+
+    @field_validator('username')
+    @classmethod
+    def lowercase_username(cls, v: str) -> str:
+        return v.lower()
 
 class LoginData(BaseModel):
     email: str
     password: str
 
 class WalletLoginData(BaseModel):
+    username: str = None
     wallet_address: str
     role: str
+
+    @field_validator('username')
+    @classmethod
+    def lowercase_username(cls, v: str) -> str:
+        return v.lower() if v else v
 
 @router.post("/signup")
 @router.post("/register")
 def signup(data: SignupData, response: Response, db: Session = Depends(get_db)):
+    if db.query(User).filter(User.username == data.username).first():
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Username already claimed")
+        
     user = db.query(User).filter(User.email == data.email).first()
     if user:
         raise HTTPException(status_code=400, detail="Email already registered")
     
     hashed_password = get_password_hash(data.password)
-    new_user = User(email=data.email, hashed_password=hashed_password, role=data.role)
+    new_user = User(username=data.username, email=data.email, hashed_password=hashed_password, role=data.role)
     db.add(new_user)
     db.commit()
     db.refresh(new_user)
@@ -67,8 +82,14 @@ def login(data: LoginData, response: Response, db: Session = Depends(get_db)):
 def wallet_login(data: WalletLoginData, response: Response, db: Session = Depends(get_db)):
     user = db.query(User).filter(User.wallet_address == data.wallet_address).first()
     if not user:
+        if not data.username:
+            raise HTTPException(status_code=400, detail="Username required for new wallet registration")
+            
+        if db.query(User).filter(User.username == data.username).first():
+            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Username already claimed")
+            
         # Register user on first wallet login automatically
-        user = User(wallet_address=data.wallet_address, role=data.role)
+        user = User(username=data.username, wallet_address=data.wallet_address, role=data.role)
         db.add(user)
         db.commit()
         db.refresh(user)
@@ -124,9 +145,13 @@ def get_current_user(request: Request, db: Session = Depends(get_db)):
     identity_type = "email" if user.email else "wallet"
     identity = user.email or user.wallet_address
     return {
+        "id": user.id,
+        "username": user.username,
         "role": user.role,
         "identityType": identity_type,
-        "identity": identity
+        "identity": identity,
+        "trust_score": user.trust_score,
+        "ratings_count": user.ratings_count
     }
 
 @router.post("/logout")

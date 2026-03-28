@@ -81,6 +81,7 @@ const Navbar = () => {
         <div style={{ display: 'flex', gap: '32px', alignItems: 'center' }}>
           <NavLink href="/">Home</NavLink>
           <NavLink href="/marketplace">Marketplace</NavLink>
+          <NavLink href="/vault">The Vault</NavLink>
           <NavLink href="/upload" onClick={handleUploadClick}>Upload Insights</NavLink>
         </div>
       </div>
