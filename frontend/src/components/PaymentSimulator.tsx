@@ -81,6 +81,11 @@ const PaymentSimulator: React.FC<PaymentSimulatorProps> = ({ onClose, onSuccess,
                         </div>
                     )}
 
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', marginBottom: '15px', color: '#00e676', backgroundColor: isDark ? 'rgba(0, 230, 118, 0.1)' : 'rgba(0, 230, 118, 0.15)', padding: '10px', borderRadius: '8px' }}>
+                        <span style={{ fontSize: '18px' }}>🛡️</span>
+                        <span style={{ fontSize: '12px', fontWeight: 'bold' }}>Privacy Shield: Your identity is protected. This purchase is recorded as a cryptographic hash. The Creator cannot see who you are.</span>
+                    </div>
+
                     <button
                         onClick={handleConfirm}
                         style={{

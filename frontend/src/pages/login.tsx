@@ -4,6 +4,79 @@ import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
 import Link from 'next/link';
 import CreatorCovenantModal from '../components/CreatorCovenantModal';
+import { Eye, EyeOff, Lock } from 'lucide-react';
+
+const passwordInput = () =>{
+    const [showPassword, setShowPassword] = useState(false);
+    const [password, setPassword] = useState('');
+
+    const isDark = true;
+
+    const togglePasswordVisibility = () => {
+        setShowPassword(!showPassword);
+    }
+
+    return (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxWidth: '400px' }}>
+            <label style={{ fontSize: '14px', fontWeight: 'bold', color: isDark ? '#aaa' : '#666' }}>
+                Secure Key / Password
+            </label>
+            
+            <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                {/* Optional: Lock Icon on the left for aesthetics */}
+                <Lock 
+                    size={18} 
+                    style={{ 
+                        position: 'absolute', 
+                        left: '15px', 
+                        color: isDark ? '#444' : '#999' 
+                    }} 
+                />
+
+                <input
+                    type={showPassword ? 'text' : 'password'}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="••••••••"
+                    style={{
+                        width: '100%',
+                        padding: '14px 45px 14px 45px', // Extra padding on right for the eye
+                        borderRadius: '12px',
+                        border: `1px solid ${isDark ? '#333' : '#ddd'}`,
+                        backgroundColor: isDark ? '#080808' : '#f9f9f9',
+                        color: isDark ? '#fff' : '#000',
+                        outline: 'none',
+                        fontSize: '16px',
+                        transition: 'border-color 0.2s'
+                    }}
+                />
+
+                {/* THE EYE ICON TRIGGER */}
+                <button
+                    type="button"
+                    onClick={togglePasswordVisibility}
+                    style={{
+                        position: 'absolute',
+                        right: '15px',
+                        background: 'none',
+                        border: 'none',
+                        cursor: 'pointer',
+                        padding: '4px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        color: isDark ? '#555' : '#999',
+                        transition: 'color 0.2s'
+                    }}
+                    onMouseEnter={(e) => (e.currentTarget.style.color = '#3b82f6')}
+                    onMouseLeave={(e) => (e.currentTarget.style.color = isDark ? '#555' : '#999')}
+                >
+                    {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                </button>
+            </div>
+        </div>
+    );
+};
 
 const Login = () => {
     const [activeTab, setActiveTab] = useState<'web3' | 'web2'>('web3');
@@ -15,6 +88,9 @@ const Login = () => {
     const { login, redirectUrl, setRedirectUrl } = useAuth();
     const router = useRouter();
     const { theme } = useTheme();
+    const [showPassword, setShowPassword] = useState(false);
+
+    
 
     const isDark = theme === 'dark';
 

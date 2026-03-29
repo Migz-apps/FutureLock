@@ -42,6 +42,9 @@ const CreatorCovenantModal: React.FC<CreatorCovenantModalProps> = ({ isOpen, onA
                 <p style={{ fontSize: '16px', lineHeight: '1.6', marginBottom: '30px', color: isDark ? '#ccc' : '#444' }}>
                     <strong>Scam-Killer Protocol Active:</strong><br /><br />
                     Funds are held in escrow for 24 hours post-reveal for community verification. High dispute rates lead to permanent account slashing.
+                    <br /><br />
+                    <strong>Pseudonymous Commerce:</strong><br /><br />
+                    FutureLock uses Pseudonymous Commerce. You will see your sales volume and revenue, but to protect the protocol's integrity and buyer safety, individual buyer identities are never disclosed to Creators.
                 </p>
 
                 <div style={{ display: 'flex', gap: '20px', justifyContent: 'center' }}>

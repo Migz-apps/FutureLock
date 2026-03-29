@@ -1,52 +1,82 @@
-# --- IDE & OS ---
+# =================================================================
+# 1. IDE & OS (Unified)
+# =================================================================
 .vscode/
 .idea/
+*.swp
+*.bak
 .DS_Store
 Thumbs.db
 
-# --- Node.js (Frontend & Blockchain) ---
+# =================================================================
+# 2. Java & Spring Boot (Backend)
+# =================================================================
+# Compiled class files
+java-backend/target/
+*.class
+
+# Log files
+java-backend/logs/
+*.log
+
+# Sensitive Configuration
+# Keep application.yml in git ONLY if it contains non-sensitive defaults.
+# If you put DB passwords or API keys in it, add it below:
+# java-backend/src/main/resources/application.yml
+
+# Package files
+*.jar
+*.war
+*.ear
+*.zip
+*.tar.gz
+*.rar
+
+# Maven specific
+.mvn/
+mvnw
+mvnw.cmd
+
+# =================================================================
+# 3. Node.js & Next.js (Frontend)
+# =================================================================
 node_modules/
+frontend/node_modules/
+.next/
+frontend/.next/
+frontend/out/
+frontend/build/
+
+# Debug logs
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
-# --- Next.js (Frontend) ---
-frontend/.next/
-frontend/out/
-frontend/build/
-frontend/.env.local
-frontend/.env.development.local
-frontend/.env.test.local
-frontend/.env.production.local
-
-# --- Hardhat (Blockchain) ---
+# =================================================================
+# 4. Hardhat & Blockchain
+# =================================================================
 blockchain/artifacts/
 blockchain/cache/
 blockchain/typechain/
 blockchain/typechain-types/
 blockchain/coverage/
 blockchain/coverage.json
-blockchain/.env
 
-# --- Python (Backend) ---
-backend/__pycache__/
-backend/*.py[cod]
-backend/*$py.class
-backend/.venv/
-backend/venv/
-backend/env/
-backend/.env
-backend/instance/
-backend/.pytest_cache/
-
-# --- Database & Logs ---
-*.sqlite
-*.db
-backend/logs/
-*.log
-
-# --- Security (Crucial) ---
+# =================================================================
+# 5. Security & Environment (CRITICAL)
+# =================================================================
+# General Env files
 .env
-.env.backup
+.env.*
+!.env.example
 secret.json
+
+# Java/Spring specific secrets
+java-backend/src/main/resources/application-*.yml
+java-backend/src/main/resources/*.p12
+java-backend/src/main/resources/*.jks
+java-backend/src/main/resources/*.pem
+
+# Blockchain secrets
+blockchain/.env
