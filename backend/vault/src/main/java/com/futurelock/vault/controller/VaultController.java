@@ -6,6 +6,7 @@ import com.futurelock.vault.repository.IntelMetadataRepository;
 import com.futurelock.vault.repository.PurchaseHistoryRepository;
 import com.futurelock.vault.service.EncryptionService;
 import com.futurelock.vault.service.TimeLockValidator;
+import com.futurelock.vault.service.MarketplaceService;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
@@ -16,6 +17,7 @@ import reactor.core.publisher.Mono;
 import java.time.OffsetDateTime;
 import java.util.Map;
 import java.util.UUID;
+import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequestMapping("/api")

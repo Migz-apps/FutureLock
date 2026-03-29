@@ -10,6 +10,8 @@ import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import java.util.Map;
 import java.util.UUID;
+import com.futurelock.vault.dto.IntelResponse;
+import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequestMapping("/api/v1/intel")

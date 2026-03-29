@@ -1,6 +1,7 @@
 package com.futurelock.vault.service;
 
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 import javax.crypto.Cipher;

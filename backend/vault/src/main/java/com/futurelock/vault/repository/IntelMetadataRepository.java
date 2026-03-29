@@ -1,10 +1,11 @@
 package com.futurelock.vault.repository;
 
-import com.futurelock.vault.model.IntelMetadata;
+import com.futurelock.vault.model.*;
 import org.springframework.data.r2dbc.repository.Query;
 import org.springframework.data.repository.reactive.ReactiveCrudRepository;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import org.springframework.stereotype.Repository;
 
 import java.util.UUID;
 

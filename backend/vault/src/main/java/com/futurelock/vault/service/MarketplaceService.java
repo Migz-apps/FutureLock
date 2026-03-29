@@ -1,7 +1,7 @@
 package com.futurelock.vault.service;
 
-import com.futurelock.vault.model.IntelMetadata;
-import com.futurelock.vault.repository.IntelMetadataRepository;
+import com.futurelock.vault.model.*;
+import com.futurelock.vault.repository.*;
 import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
@@ -10,6 +10,7 @@ import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import reactor.util.retry.Retry;
 import java.time.Duration;
 import java.util.UUID;
+import lombok.RequiredArgsConstructor;
 
 @Service
 public class MarketplaceService {

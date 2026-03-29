@@ -7,6 +7,8 @@ import org.springframework.boot.web.server.WebServerFactoryCustomizer;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import reactor.netty.resources.LoopResources;
+import org.springframework.web.reactive.config.CorsRegistry;
+import org.springframework.web.reactive.config.WebFluxConfigurer;
 
 @Configuration
 public class GlobalConfig {

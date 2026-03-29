@@ -12,6 +12,13 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Mono;
+import com.futurelock.vault.dto.AuthResponse;
+import com.futurelock.vault.dto.LoginRequest;
+import com.futurelock.vault.dto.SignupRequest;
+import com.futurelock.vault.dto.WalletLoginRequest;
+import com.futurelock.vault.service.AuthService;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 
 import java.time.Duration;
 import java.util.Map;
