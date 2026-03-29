@@ -11,7 +11,7 @@ export default function Marketplace() {
   useEffect(() => {
     const fetchInsights = async () => {
       try {
-        const response = await axios.get('http://127.0.0.1:8000/insights');
+        const response = await axios.get('http://127.0.0.1:8080/api/v1/intel/public');
         setInsights(response.data);
       } catch (error) {
         console.error("Failed to fetch insights from FastAPI", error);
@@ -33,7 +33,7 @@ export default function Marketplace() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
         {insights.map((item) => (
-          <GlassCard 
+          <GlassCard
             key={item.id}
             title={item.title}
             price={item.price || "0.01"}

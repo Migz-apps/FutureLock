@@ -18,7 +18,7 @@ export default function CreateLock() {
     setLoading(true);
     try {
       // Calling your FastAPI Backend with dynamic address
-      const response = await axios.post('http://127.0.0.1:8000/insights/create', null, {
+      const response = await axios.post('http://127.0.0.1:8080/api/v1/intel/create', null, {
         params: {
           ...formData,
           creator: address || '0x0000000000000000000000000000000000000000'
@@ -38,37 +38,37 @@ export default function CreateLock() {
       <h2 className="text-2xl font-bold text-white mb-6 flex items-center">
         <Lock className="mr-2 text-blue-500" /> <span className="tracking-tight">SECURE INTELLIGENCE</span>
       </h2>
-      
+
       {!result ? (
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-1">
             <label className="text-xs font-bold text-zinc-500 uppercase ml-1">Insight Title</label>
-            <input 
+            <input
               type="text" placeholder="e.g., Q3 Market Vulnerabilities"
               className="w-full bg-white/5 border border-white/10 p-3 rounded-lg text-white outline-none focus:border-blue-500 transition-all"
-              onChange={(e) => setFormData({...formData, title: e.target.value})}
+              onChange={(e) => setFormData({ ...formData, title: e.target.value })}
               required
             />
           </div>
           <div className="space-y-1">
             <label className="text-xs font-bold text-zinc-500 uppercase ml-1">Sensitive Content</label>
-            <textarea 
+            <textarea
               placeholder="Paste intelligence data here..."
               className="w-full h-32 bg-white/5 border border-white/10 p-3 rounded-lg text-white outline-none focus:border-blue-500 transition-all resize-none"
-              onChange={(e) => setFormData({...formData, content: e.target.value})}
+              onChange={(e) => setFormData({ ...formData, content: e.target.value })}
               required
             />
           </div>
           <div className="space-y-1">
             <label className="text-xs font-bold text-zinc-500 uppercase ml-1">Automatic Unlock Date</label>
-            <input 
-              type="datetime-local" 
+            <input
+              type="datetime-local"
               className="w-full bg-white/5 border border-white/10 p-3 rounded-lg text-white outline-none focus:border-blue-500 transition-all"
-              onChange={(e) => setFormData({...formData, unlockDate: e.target.value})}
+              onChange={(e) => setFormData({ ...formData, unlockDate: e.target.value })}
               required
             />
           </div>
-          <button 
+          <button
             type="submit" disabled={loading}
             className="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-4 rounded-lg transition-all flex justify-center items-center shadow-lg shadow-blue-900/20"
           >

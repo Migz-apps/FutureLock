@@ -1,0 +1,42 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: vault
+  threads:
+    virtual:
+      enabled: true
+  r2dbc:
+    url: r2dbc:postgresql://localhost:5432/futurelock
+    username: postgres
+    password: margarine
+    pool:
+      initial-size: 100
+      max-size: 5000
+      max-idle-time: 30m
+      validation-query: SELECT 1
+  resilience4j.circuitbreaker:
+    instances:
+      marketplaceService:
+        registerHealthIndicator: true
+        slidingWindowSize: 1000
+        minimumNumberOfCalls: 500
+        wait-duration: 5s
+        failure-rate-threshold: 50
+
+    silence4j.ratelimiter:
+      instances:
+        apiRatelimiter:
+          limitForPeriod: 5000000
+          limitRefreshPeriod: 1s
+          timeoutDuration: 100ms
+
+    management:
+      endpoints:
+        web:
+          exposure:
+            include: health,metrics
+      endpoints:
+        health:
+          show-details: ALWAYS

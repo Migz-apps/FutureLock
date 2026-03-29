@@ -28,7 +28,7 @@ const Signup = () => {
     const handleEmailSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
-            const res = await fetch('http://127.0.0.1:8000/auth/signup', {
+            const res = await fetch('http://127.0.0.1:8080/auth/signup', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ email, password, role })

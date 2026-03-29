@@ -23,7 +23,7 @@ const Vault = () => {
     const [ratings, setRatings] = useState<Record<string, number>>({});
     const [searchQuery, setSearchQuery] = useState('');
     const [categoryFilter, setCategoryFilter] = useState('All');
-    
+
     // Custom Dropdown States
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
     const dropdownRef = useRef<HTMLDivElement>(null);
@@ -50,7 +50,7 @@ const Vault = () => {
         const fetchArchive = async () => {
             setLoading(true);
             try {
-                const res = await fetch('/api/buyer/vault');
+                const res = await fetch('http://127.0.0.1:8080/api/buyer/vault', { credentials: 'include' });
                 if (res.ok) {
                     const data = await res.json();
                     if (isMounted) setVaultList(data);
@@ -139,12 +139,12 @@ const Vault = () => {
                         onChange={(e) => setSearchQuery(e.target.value)}
                         style={{ flex: 2, padding: '14px 20px', borderRadius: '12px', border: `1px solid ${isDark ? '#333' : '#ddd'}`, backgroundColor: isDark ? '#111' : '#f9f9f9', color: isDark ? '#fff' : '#000', outline: 'none', fontSize: '16px' }}
                     />
-                    
+
                     {/* CUSTOM DROPDOWN FIX */}
                     <div ref={dropdownRef} style={{ flex: 1, minWidth: '150px', position: 'relative' }}>
-                        <div 
+                        <div
                             onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                            style={{ 
+                            style={{
                                 display: 'flex', alignItems: 'center', justifyContent: 'space-between',
                                 padding: '14px 20px', borderRadius: '12px', cursor: 'pointer',
                                 border: `1px solid ${isDropdownOpen ? '#3b82f6' : (isDark ? '#333' : '#ddd')}`,
@@ -157,20 +157,20 @@ const Vault = () => {
                         </div>
 
                         {isDropdownOpen && (
-                            <div style={{ 
-                                position: 'absolute', top: 'calc(100% + 8px)', left: 0, width: '100%', 
-                                backgroundColor: isDark ? '#0d0d0d' : '#fff', 
-                                border: `1px solid ${isDark ? '#333' : '#eee'}`, 
+                            <div style={{
+                                position: 'absolute', top: 'calc(100% + 8px)', left: 0, width: '100%',
+                                backgroundColor: isDark ? '#0d0d0d' : '#fff',
+                                border: `1px solid ${isDark ? '#333' : '#eee'}`,
                                 borderRadius: '12px', zIndex: 100, overflow: 'hidden',
                                 boxShadow: '0 10px 25px rgba(0,0,0,0.2)',
                                 animation: 'dropdownFade 0.2s ease-out'
                             }}>
                                 {categories.map((cat) => (
-                                    <div 
+                                    <div
                                         key={cat}
                                         onClick={() => { setCategoryFilter(cat); setIsDropdownOpen(false); }}
                                         className="dropdown-item"
-                                        style={{ 
+                                        style={{
                                             padding: '12px 20px', fontSize: '14px', cursor: 'pointer',
                                             display: 'flex', alignItems: 'center', justifyContent: 'space-between',
                                             backgroundColor: categoryFilter === cat ? (isDark ? '#1a1a1a' : '#f0f7ff') : 'transparent',

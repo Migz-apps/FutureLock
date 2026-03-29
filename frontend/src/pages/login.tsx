@@ -6,7 +6,7 @@ import Link from 'next/link';
 import CreatorCovenantModal from '../components/CreatorCovenantModal';
 import { Eye, EyeOff, Lock } from 'lucide-react';
 
-const passwordInput = () =>{
+const passwordInput = () => {
     const [showPassword, setShowPassword] = useState(false);
     const [password, setPassword] = useState('');
 
@@ -21,16 +21,16 @@ const passwordInput = () =>{
             <label style={{ fontSize: '14px', fontWeight: 'bold', color: isDark ? '#aaa' : '#666' }}>
                 Secure Key / Password
             </label>
-            
+
             <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
                 {/* Optional: Lock Icon on the left for aesthetics */}
-                <Lock 
-                    size={18} 
-                    style={{ 
-                        position: 'absolute', 
-                        left: '15px', 
-                        color: isDark ? '#444' : '#999' 
-                    }} 
+                <Lock
+                    size={18}
+                    style={{
+                        position: 'absolute',
+                        left: '15px',
+                        color: isDark ? '#444' : '#999'
+                    }}
                 />
 
                 <input
@@ -90,7 +90,7 @@ const Login = () => {
     const { theme } = useTheme();
     const [showPassword, setShowPassword] = useState(false);
 
-    
+
 
     const isDark = theme === 'dark';
 
@@ -105,7 +105,7 @@ const Login = () => {
     const handleEmailSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
-            const res = await fetch('http://127.0.0.1:8000/auth/login', {
+            const res = await fetch('http://127.0.0.1:8080/auth/login', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ email, password, role })
