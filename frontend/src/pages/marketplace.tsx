@@ -134,7 +134,7 @@ const Marketplace = () => {
                         placeholder="Search by Title or Creator..."
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
-                        style={{ width: '100%', padding: '14px 14px 14px 45px', borderRadius: '12px', border: `1px solid ${isDark ? '#222' : '#ddd'}`, backgroundColor: isDark ? '#080808' : '#f9f9f9', color: isDark ? '#fff' : '#000', outline: 'none', fontSize: '16px' }}
+                        style={{ width: '100%', padding: '14px 14px 14px 45px', borderRadius: '12px', border: `1px solid ${isDark ? '#222' : '#ddd'}`, backgroundColor: isDark ? '#080818' : '#f9f9f9', color: isDark ? '#fff' : '#000', outline: 'none', fontSize: '16px' }}
                     />
                 </div>
 
@@ -146,7 +146,7 @@ const Marketplace = () => {
                             display: 'flex', alignItems: 'center', justifyContent: 'space-between',
                             padding: '14px 20px', borderRadius: '12px', cursor: 'pointer',
                             border: `1px solid ${isDropdownOpen ? '#3b82f6' : (isDark ? '#222' : '#ddd')}`,
-                            backgroundColor: isDark ? '#080808' : '#f9f9f9',
+                            backgroundColor: isDark ? '#080818' : '#f9f9f9',
                             transition: 'all 0.2s ease'
                         }}
                     >
@@ -188,7 +188,7 @@ const Marketplace = () => {
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '30px' }}>
                 {loading ? (
                     Array.from({ length: 3 }).map((_, i) => (
-                        <div key={i} style={{ padding: '30px', backgroundColor: isDark ? '#080808' : '#fff', border: `1px solid ${isDark ? '#1a1a1a' : '#eee'}`, borderRadius: '16px', animation: 'pulse 1.5s infinite' }}>
+                        <div key={i} style={{ padding: '30px', backgroundColor: isDark ? '#080818' : '#fff', border: `1px solid ${isDark ? '#1a1a1a' : '#eee'}`, borderRadius: '16px', animation: 'pulse 1.5s infinite' }}>
                             <div style={{ height: '20px', backgroundColor: isDark ? '#1a1a1a' : '#eee', borderRadius: '4px', width: '60%', marginBottom: '15px' }}></div>
                             <div style={{ height: '14px', backgroundColor: isDark ? '#1a1a1a' : '#eee', borderRadius: '4px', width: '100%', marginBottom: '8px' }}></div>
                             <div style={{ height: '14px', backgroundColor: isDark ? '#1a1a1a' : '#eee', borderRadius: '4px', width: '80%' }}></div>
@@ -199,7 +199,7 @@ const Marketplace = () => {
                         const countdown = formatCountdown(item.unlockDays);
                         return (
                             <div key={item.id} style={{
-                                padding: '30px', backgroundColor: isDark ? '#080808' : '#fff',
+                                padding: '30px', backgroundColor: isDark ? '#080818' : '#fff',
                                 border: `1px solid ${isDark ? '#1a1a1a' : '#eee'}`, borderRadius: '16px',
                                 display: 'flex', flexDirection: 'column', transition: '0.3s cubic-bezier(0.4, 0, 0.2, 1)'
                             }} className="intel-card">

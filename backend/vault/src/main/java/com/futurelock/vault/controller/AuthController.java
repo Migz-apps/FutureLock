@@ -19,6 +19,11 @@ import com.futurelock.vault.dto.WalletLoginRequest;
 import com.futurelock.vault.service.AuthService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import com.futurelock.vault.service.EmailVerificationService;
+import com.futurelock.vault.service.RateLimiterService;
+import com.futurelock.vault.service.EmailService;
+import com.futurelock.vault.dto.EmailVerifyRequest;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import java.time.Duration;
 import java.util.Map;
@@ -31,6 +36,15 @@ public class AuthController {
     private final UserRepository userRepository;
     private final JwtService jwtService;
     private final PasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
+
+    @Autowired
+    private EmailVerificationService emailVerificationService;
+
+    @Autowired
+    private RateLimiterService rateLimiterService;
+
+    @Autowired
+    private EmailService emailService;
 
     public AuthController(UserRepository userRepository, JwtService jwtService) {
         this.userRepository = userRepository;
@@ -151,6 +165,24 @@ public class AuthController {
         headers.add(HttpHeaders.SET_COOKIE, ResponseCookie.from("access_token", "").maxAge(0).path("/").build().toString());
         headers.add(HttpHeaders.SET_COOKIE, ResponseCookie.from("refresh_token", "").maxAge(0).path("/").build().toString());
         return Mono.just(ResponseEntity.ok().headers(headers).body(Map.of("message", "Logged out successfully")));
+    }
+
+    @PostMapping("/verify-email")
+    public Mono<ResponseEntity<String>> requestVerification(@RequestBody Map<String, String> request) {
+        String email = request.get("email");
+    
+        return emailVerificationService.verifyAndGenerateCode(email)
+            .flatMap(code -> rateLimiterService.checkLimitAndStore(email, code)
+                .then(emailService.sendVerificationEmail(email, code)) // We'll define this next
+                .thenReturn(ResponseEntity.ok("Verification code sent")))
+            .onErrorResume(e -> Mono.just(ResponseEntity.badRequest().body(e.getMessage())));
+    }
+
+    @PostMapping("/confirm-code")
+    public Mono<ResponseEntity<Boolean>> confirmCode(@RequestBody EmailVerifyRequest request) {
+        return rateLimiterService.validateCode(request.email(), request.code())
+            .map(isValid -> ResponseEntity.ok(isValid))
+            .onErrorResume(e -> Mono.just(ResponseEntity.status(401).body(false)));
     }
 }
 

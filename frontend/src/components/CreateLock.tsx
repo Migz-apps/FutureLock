@@ -18,7 +18,7 @@ export default function CreateLock() {
     setLoading(true);
     try {
       // Calling your FastAPI Backend with dynamic address
-      const response = await axios.post('http://127.0.0.1:8080/api/v1/intel/create', null, {
+      const response = await axios.post('http://127.0.0.1:8081/api/v1/intel/create', null, {
         params: {
           ...formData,
           creator: address || '0x0000000000000000000000000000000000000000'

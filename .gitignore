@@ -80,3 +80,6 @@ java-backend/src/main/resources/*.pem
 
 # Blockchain secrets
 blockchain/.env
+
+#backend secrets
+backend/vault/.env

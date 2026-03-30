@@ -1,5 +1,5 @@
 server:
-  port: 8080
+  port: 8081
   netty:
     connection-timeout: 2s
     idle-timeout: 20s
@@ -47,3 +47,12 @@ spring:
             include: health,metrics
         health:
           show-details: ALWAYS
+
+    mail:
+      host: smtp.example.com
+      port: 587
+      username: ${MAIL_USERNAME}
+      password: ${MAIL_PASSWORD}
+      properties:
+        mail.smtp.auth: true
+        mail.smtp.starttls.enable: true

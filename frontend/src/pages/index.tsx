@@ -91,6 +91,28 @@ const Home = () => {
         </div>
       </section>
 
+      {/* UPDATED: FLEXIBLE ACCESS SECTION (Visa/Crypto, Web2/Web3) */}
+      <section style={{ padding: '60px 40px', maxWidth: '1100px', margin: '0 auto', borderTop: '1px solid var(--border)' }}>
+        <div style={{ textAlign: 'center', marginBottom: '40px' }}>
+          <h2 style={{ fontSize: '32px', fontWeight: '800', letterSpacing: '-1px' }}>Universal Access</h2>
+          <p style={{ color: 'var(--text-secondary)' }}>Whether you're a crypto native or a traditional user, our platform is built for you.</p>
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '20px' }}>
+            <div style={{ padding: '30px', backgroundColor: 'var(--surface)', borderRadius: '12px', border: '1px solid var(--border)' }}>
+              <h4 style={{ fontWeight: 'bold', marginBottom: '10px' }}>Card or Crypto Payments</h4>
+              <p style={{ fontSize: '14px', color: 'var(--text-secondary)' }}>Purchase premium intelligence seamlessly using <b>Visa, Mastercard, or your preferred Crypto Wallet</b>. We ensure a frictionless checkout for everyone.</p>
+            </div>
+            <div style={{ padding: '30px', backgroundColor: 'var(--surface)', borderRadius: '12px', border: '1px solid var(--border)' }}>
+              <h4 style={{ fontWeight: 'bold', marginBottom: '10px' }}>Flexible Onboarding</h4>
+              <p style={{ fontSize: '14px', color: 'var(--text-secondary)' }}>Get started with an <b>Email or a Digital Wallet</b>. Choose the login method that fits your security preference and workflow.</p>
+            </div>
+            <div style={{ padding: '30px', backgroundColor: 'var(--surface)', borderRadius: '12px', border: '1px solid var(--border)' }}>
+              <h4 style={{ fontWeight: 'bold', marginBottom: '10px' }}>Inclusive Identity</h4>
+              <p style={{ fontSize: '14px', color: 'var(--text-secondary)' }}>Your profile is universal. Access your vault and history whether you're identified by an email address or a decentralized wallet ID.</p>
+            </div>
+        </div>
+      </section>
+
       {/* 2. CRYPTOGRAPHIC FOUNDATION */}
       <section style={{ padding: '80px 40px', maxWidth: '1100px', margin: '0 auto' }}>
         <h2 style={{ fontSize: '32px', fontWeight: '800', marginBottom: '40px', letterSpacing: '-1px' }}>
@@ -112,6 +134,26 @@ const Home = () => {
               <p style={{ color: 'var(--text-secondary)', fontSize: '15px', lineHeight: '1.5' }}>{feature.desc}</p>
             </div>
           ))}
+        </div>
+      </section>
+
+      {/* NEW: TRUST & REPUTATION SECTION */}
+      <section style={{ padding: '80px 40px', maxWidth: '1100px', margin: '0 auto', textAlign: 'center' }}>
+        <h2 style={{ fontSize: '32px', fontWeight: '800', marginBottom: '20px', letterSpacing: '-1px' }}>Built on Verified Trust</h2>
+        <p style={{ color: 'var(--text-secondary)', marginBottom: '40px' }}>Every creator and piece of intelligence is backed by our transparent reputation engine.</p>
+        <div style={{ display: 'flex', justifyContent: 'center', gap: '60px', flexWrap: 'wrap' }}>
+          <div>
+            <h3 style={{ fontSize: '36px', fontWeight: '900', color: 'var(--accent-primary)' }}>100%</h3>
+            <p style={{ fontWeight: 'bold' }}>Immutable Ratings</p>
+          </div>
+          <div>
+            <h3 style={{ fontSize: '36px', fontWeight: '900', color: 'var(--accent-primary)' }}>Weighted</h3>
+            <p style={{ fontWeight: 'bold' }}>Trust Scores</p>
+          </div>
+          <div>
+            <h3 style={{ fontSize: '36px', fontWeight: '900', color: 'var(--accent-primary)' }}>Escrow</h3>
+            <p style={{ fontWeight: 'bold' }}>Fraud Protection</p>
+          </div>
         </div>
       </section>
 

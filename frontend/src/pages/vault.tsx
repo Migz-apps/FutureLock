@@ -50,7 +50,7 @@ const Vault = () => {
         const fetchArchive = async () => {
             setLoading(true);
             try {
-                const res = await fetch('http://127.0.0.1:8080/api/buyer/vault', { credentials: 'include' });
+                const res = await fetch('http://127.0.0.1:8081/api/buyer/vault', { credentials: 'include' });
                 if (res.ok) {
                     const data = await res.json();
                     if (isMounted) setVaultList(data);

@@ -43,7 +43,7 @@ const passwordInput = () => {
                         padding: '14px 45px 14px 45px', // Extra padding on right for the eye
                         borderRadius: '12px',
                         border: `1px solid ${isDark ? '#333' : '#ddd'}`,
-                        backgroundColor: isDark ? '#080808' : '#f9f9f9',
+                        backgroundColor: isDark ? '#080818' : '#f9f9f9',
                         color: isDark ? '#fff' : '#000',
                         outline: 'none',
                         fontSize: '16px',
@@ -105,7 +105,7 @@ const Login = () => {
     const handleEmailSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
-            const res = await fetch('http://127.0.0.1:8080/auth/login', {
+            const res = await fetch('http://127.0.0.1:8081/auth/login', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ email, password, role })

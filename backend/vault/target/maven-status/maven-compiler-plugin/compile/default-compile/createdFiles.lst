@@ -1,5 +1,6 @@
 com\futurelock\vault\config\SecurityConfig.class
 com\futurelock\vault\VaultApplication.class
+com\futurelock\vault\service\EmailVerificationService.class
 com\futurelock\vault\dto\IntelRequest.class
 com\futurelock\vault\service\AuthService.class
 com\futurelock\vault\controller\PurchaseRequest.class
@@ -9,6 +10,7 @@ com\futurelock\vault\config\GlobalConfig.class
 com\futurelock\vault\controller\DecryptRequest.class
 com\futurelock\vault\dto\IntelResponse.class
 com\futurelock\vault\repository\PurchaseHistoryRepository.class
+com\futurelock\vault\service\RateLimiterService$VerificationData.class
 com\futurelock\vault\model\Rating.class
 com\futurelock\vault\repository\IntelMetadataRepository.class
 com\futurelock\vault\controller\WalletLoginData.class
@@ -19,11 +21,13 @@ com\futurelock\vault\service\EncryptionService.class
 com\futurelock\vault\controller\VaultController.class
 com\futurelock\vault\repository\RatingRepository.class
 com\futurelock\vault\service\MarketplaceService.class
+com\futurelock\vault\service\EmailService.class
 com\futurelock\vault\controller\AuthController.class
 com\futurelock\vault\controller\SignupData.class
 com\futurelock\vault\exception\GlobalExceptionHandler.class
 com\futurelock\vault\dto\UserResponse.class
 com\futurelock\vault\model\IntelMetadata.class
+com\futurelock\vault\service\RateLimiterService.class
 com\futurelock\vault\dto\WalletLoginRequest.class
 com\futurelock\vault\dto\AuthResponse.class
 com\futurelock\vault\repository\UserRepository.class
@@ -34,3 +38,4 @@ com\futurelock\vault\controller\LoginData.class
 com\futurelock\vault\controller\HealthMonitoringController.class
 com\futurelock\vault\service\TimeLockValidator.class
 com\futurelock\vault\model\User.class
+com\futurelock\vault\dto\EmailVerifyRequest.class

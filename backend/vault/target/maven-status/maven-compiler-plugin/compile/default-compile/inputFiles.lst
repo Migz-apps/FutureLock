@@ -6,6 +6,7 @@ C:\Users\user\Downloads\github\FutureLock\backend\vault\src\main\java\com\future
 C:\Users\user\Downloads\github\FutureLock\backend\vault\src\main\java\com\futurelock\vault\controller\IntelController.java
 C:\Users\user\Downloads\github\FutureLock\backend\vault\src\main\java\com\futurelock\vault\controller\VaultController.java
 C:\Users\user\Downloads\github\FutureLock\backend\vault\src\main\java\com\futurelock\vault\dto\AuthResponse.java
+C:\Users\user\Downloads\github\FutureLock\backend\vault\src\main\java\com\futurelock\vault\dto\EmailVerifyRequest.java
 C:\Users\user\Downloads\github\FutureLock\backend\vault\src\main\java\com\futurelock\vault\dto\IntelRequest.java
 C:\Users\user\Downloads\github\FutureLock\backend\vault\src\main\java\com\futurelock\vault\dto\IntelResponse.java
 C:\Users\user\Downloads\github\FutureLock\backend\vault\src\main\java\com\futurelock\vault\dto\LoginRequest.java
@@ -24,8 +25,11 @@ C:\Users\user\Downloads\github\FutureLock\backend\vault\src\main\java\com\future
 C:\Users\user\Downloads\github\FutureLock\backend\vault\src\main\java\com\futurelock\vault\repository\RatingRepository.java
 C:\Users\user\Downloads\github\FutureLock\backend\vault\src\main\java\com\futurelock\vault\repository\UserRepository.java
 C:\Users\user\Downloads\github\FutureLock\backend\vault\src\main\java\com\futurelock\vault\service\AuthService.java
+C:\Users\user\Downloads\github\FutureLock\backend\vault\src\main\java\com\futurelock\vault\service\EmailService.java
+C:\Users\user\Downloads\github\FutureLock\backend\vault\src\main\java\com\futurelock\vault\service\EmailVerificationService.java
 C:\Users\user\Downloads\github\FutureLock\backend\vault\src\main\java\com\futurelock\vault\service\EncryptionService.java
 C:\Users\user\Downloads\github\FutureLock\backend\vault\src\main\java\com\futurelock\vault\service\JwtService.java
 C:\Users\user\Downloads\github\FutureLock\backend\vault\src\main\java\com\futurelock\vault\service\MarketplaceService.java
+C:\Users\user\Downloads\github\FutureLock\backend\vault\src\main\java\com\futurelock\vault\service\RateLimiterService.java
 C:\Users\user\Downloads\github\FutureLock\backend\vault\src\main\java\com\futurelock\vault\service\TimeLockValidator.java
 C:\Users\user\Downloads\github\FutureLock\backend\vault\src\main\java\com\futurelock\vault\VaultApplication.java

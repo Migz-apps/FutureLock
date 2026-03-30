@@ -18,6 +18,10 @@ const Signup = () => {
 
     const isDark = theme === 'dark';
 
+    const [isVerifying, setIsVerifying] = useState(false);
+    const [signupData, setSignupData] = useState(null); // Temporarily hold data
+    const [verificationError, setVerificationError] = useState('');
+
     const getRedirectRoute = (defaultRole: string) => {
         const queryRedirect = router.query.redirect as string;
         if (queryRedirect) return queryRedirect;
@@ -28,7 +32,7 @@ const Signup = () => {
     const handleEmailSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
-            const res = await fetch('http://127.0.0.1:8080/auth/signup', {
+            const res = await fetch('http://127.0.0.1:8081/auth/signup', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ email, password, role })
@@ -86,6 +90,13 @@ const Signup = () => {
         } catch (err) {
             console.error(err);
         }
+    };
+
+    const handleInitialSignup = async (formData) => {
+        // 1. Call /request-verification
+        // 2. If success:
+        setSignupData(formData);
+        setIsVerifying(true);
     };
 
     return (
