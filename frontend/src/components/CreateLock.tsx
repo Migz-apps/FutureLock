@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import axios from 'axios';
 import { Lock, ShieldCheck, Loader2 } from 'lucide-react';
 import { useAccount } from 'wagmi';
+import { getErrorMessage } from '../utils/errorHandler';
 
 export default function CreateLock() {
   const { address } = useAccount();
@@ -18,7 +19,7 @@ export default function CreateLock() {
     setLoading(true);
     try {
       // Calling your FastAPI Backend with dynamic address
-      const response = await axios.post('http://127.0.0.1:8081/api/v1/intel/create', null, {
+      const response = await axios.post('process.env.NEXT_PUBLIC_BACKEND_URL/api/v1/intel/create', null, {
         params: {
           ...formData,
           creator: address || '0x0000000000000000000000000000000000000000'
@@ -26,8 +27,7 @@ export default function CreateLock() {
       });
       setResult(response.data);
     } catch (error) {
-      console.error("Encryption failed", error);
-      alert("Backend error: Make sure FastAPI is running!");
+      alert(getErrorMessage(error));
     } finally {
       setLoading(false);
     }

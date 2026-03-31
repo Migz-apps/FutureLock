@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
 import { ShieldCheck, Trash2, ShieldAlert, ChevronDown, Check } from 'lucide-react';
+import { getErrorMessage } from '../utils/errorHandler';
 
 interface VaultItem {
     id: string;
@@ -50,7 +51,7 @@ const Vault = () => {
         const fetchArchive = async () => {
             setLoading(true);
             try {
-                const res = await fetch('http://127.0.0.1:8081/api/buyer/vault', { credentials: 'include' });
+                const res = await fetch('process.env.NEXT_PUBLIC_BACKEND_URL/api/buyer/vault', { credentials: 'include' });
                 if (res.ok) {
                     const data = await res.json();
                     if (isMounted) setVaultList(data);
@@ -64,7 +65,7 @@ const Vault = () => {
                     }
                 }
             } catch (err) {
-                console.error(err);
+                alert(getErrorMessage(err));
                 if (isMounted) {
                     setVaultList([
                         { id: '0x101', title: 'Q1 Defense Strategy Leak', description: 'Declassified documentation detailing Q1 autonomous drone defenses.', category: 'Security', creator: '0xsecops', hasAccess: true },

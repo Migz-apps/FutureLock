@@ -1,10 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useRouter } from 'next/router';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
 import Link from 'next/link';
 import CreatorCovenantModal from '../components/CreatorCovenantModal';
 import { Eye, EyeOff, Lock } from 'lucide-react';
+import { getErrorMessage, handleAsyncError } from '../utils/errorHandler';
 
 const passwordInput = () => {
     const [showPassword, setShowPassword] = useState(false);
@@ -23,7 +24,6 @@ const passwordInput = () => {
             </label>
 
             <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
-                {/* Optional: Lock Icon on the left for aesthetics */}
                 <Lock
                     size={18}
                     style={{
@@ -40,7 +40,7 @@ const passwordInput = () => {
                     placeholder="••••••••"
                     style={{
                         width: '100%',
-                        padding: '14px 45px 14px 45px', // Extra padding on right for the eye
+                        padding: '14px 45px 14px 45px',
                         borderRadius: '12px',
                         border: `1px solid ${isDark ? '#333' : '#ddd'}`,
                         backgroundColor: isDark ? '#080818' : '#f9f9f9',
@@ -51,7 +51,6 @@ const passwordInput = () => {
                     }}
                 />
 
-                {/* THE EYE ICON TRIGGER */}
                 <button
                     type="button"
                     onClick={togglePasswordVisibility}
@@ -90,12 +89,12 @@ const Login = () => {
     const { theme } = useTheme();
     const [showPassword, setShowPassword] = useState(false);
 
-
-
     const isDark = theme === 'dark';
 
+    // Error state for Standard Access (Web2) only
+    const [formError, setFormError] = useState('');
+
     const getRedirectRoute = (defaultRole: string) => {
-        // Prefer explicit router query over context if both exist, but query is more direct from deep linking
         const queryRedirect = router.query.redirect as string;
         if (queryRedirect) return queryRedirect;
         if (redirectUrl) return redirectUrl;
@@ -104,23 +103,30 @@ const Login = () => {
 
     const handleEmailSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        try {
-            const res = await fetch('http://127.0.0.1:8081/auth/login', {
+        setFormError('');
+
+        const result = await handleAsyncError(async () => {
+            const res = await fetch('process.env.NEXT_PUBLIC_BACKEND_URL/auth/login', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ email, password, role })
             });
-            if (res.ok) {
-                const data = await res.json();
-                login(data.role || role, 'email', email);
-                const nextRoute = getRedirectRoute(data.role || role);
-                setRedirectUrl(''); // clear state
-                router.push(nextRoute);
-            } else {
-                alert("Failed to login.");
+
+            if (!res.ok) {
+                const errorData = await res.json().catch(() => ({}));
+                throw { ...errorData, status: res.status };
             }
-        } catch (err) {
-            console.error(err);
+            return await res.json();
+        });
+
+        if (result.error) {
+            setFormError(result.error);
+        } else {
+            const data = result.data;
+            login(data.role || role, 'email', email);
+            const nextRoute = getRedirectRoute(data.role || role);
+            setRedirectUrl('');
+            router.push(nextRoute);
         }
     };
 
@@ -143,13 +149,14 @@ const Login = () => {
     };
 
     const handleWalletConnect = async () => {
+        setFormError('');
         if (role === 'Creator' && !username.trim() && activeTab === 'web3') {
-            alert('Please complete your profile by providing a username.');
+            setFormError("Please choose a username first.");
             return;
         }
         try {
             if (!(window as any).ethereum) {
-                alert('MetaMask or a Web3 wallet is required.');
+                setFormError("MetaMask or a Web3 wallet is required.");
                 return;
             }
             const accounts = await (window as any).ethereum.request({ method: 'eth_requestAccounts' });
@@ -160,16 +167,16 @@ const Login = () => {
                 setRedirectUrl('');
                 router.push(nextRoute);
             }
-        } catch (err) {
-            console.error(err);
+        } catch (err: any) {
+            setFormError(getErrorMessage(err));
         }
     };
 
     return (
         <div style={{ display: 'flex', height: '100vh', backgroundColor: isDark ? '#000' : '#fff', color: isDark ? '#fff' : '#000' }}>
-            {/* Left side: Image Cover (Flipped Layout) */}
+            {/* Left side: Image Cover (60%) */}
             <div style={{
-                flex: '1',
+                flex: '3.5',
                 background: 'linear-gradient(135deg, #0070f3 0%, #000000 100%)',
                 display: 'flex',
                 alignItems: 'center',
@@ -182,8 +189,8 @@ const Login = () => {
                 </div>
             </div>
 
-            {/* Right side: Form (Flipped Layout) */}
-            <div style={{ flex: '1', display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '0 10%' }}>
+            {/* Right side: Form (40%) */}
+            <div style={{ flex: '1.5', display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '0 10%' }}>
                 <h1 style={{ fontSize: '40px', fontWeight: 'bold', marginBottom: '10px' }}>Welcome Back</h1>
                 <p style={{ color: isDark ? '#aaa' : '#666', marginBottom: '30px' }}>Select an authentication pathway.</p>
 
@@ -216,6 +223,11 @@ const Login = () => {
                                 placeholder="To claim if no identity exists"
                             />
                         </div>
+                        {formError && activeTab === 'web3' ? (
+                            <div style={{ backgroundColor: isDark ? '#450a0a' : '#fee2e2', color: isDark ? '#f87171' : '#ef4444', padding: '12px', borderRadius: '8px', marginBottom: '15px', border: `1px solid ${isDark ? '#991b1b' : '#fecaca'}` }}>
+                                {formError}
+                            </div>
+                        ) : null}
                         <button
                             onClick={handleWalletConnect}
                             style={{ padding: '16px 32px', backgroundColor: 'var(--accent-primary)', color: '#fff', border: 'none', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer', fontSize: '18px', width: '100%', transition: 'all 0.2s' }}
@@ -224,7 +236,11 @@ const Login = () => {
                         </button>
                     </div>
                 ) : (
-                    <form onSubmit={handleEmailSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                    <form 
+                        onSubmit={handleEmailSubmit} 
+                        noValidate
+                        style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}
+                    >
                         <div style={{ display: 'flex', gap: '20px', marginBottom: '10px' }}>
                             <div
                                 onClick={() => handleRoleSelect('Creator')}
@@ -246,19 +262,67 @@ const Login = () => {
                                 value={email}
                                 onChange={e => setEmail(e.target.value)}
                                 style={{ width: '100%', padding: '12px 16px', borderRadius: '8px', border: `1px solid ${isDark ? '#333' : '#ccc'}`, backgroundColor: isDark ? '#111' : '#f9f9f9', color: isDark ? '#fff' : '#000', outline: 'none' }}
+                                placeholder="you@example.com"
                                 required
                             />
                         </div>
                         <div>
                             <label style={{ display: 'block', marginBottom: '8px', fontWeight: 'bold' }}>Password</label>
-                            <input
-                                type="password"
-                                value={password}
-                                onChange={e => setPassword(e.target.value)}
-                                style={{ width: '100%', padding: '12px 16px', borderRadius: '8px', border: `1px solid ${isDark ? '#333' : '#ccc'}`, backgroundColor: isDark ? '#111' : '#f9f9f9', color: isDark ? '#fff' : '#000', outline: 'none' }}
-                                required
-                            />
+                            <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                                <input
+                                    type={showPassword ? 'text' : 'password'}
+                                    value={password}
+                                    onChange={e => setPassword(e.target.value)}
+                                    placeholder="••••••••"
+                                    style={{
+                                        width: '100%',
+                                        padding: '12px 45px 12px 16px',
+                                        borderRadius: '8px',
+                                        border: `1px solid ${isDark ? '#333' : '#ccc'}`,
+                                        backgroundColor: isDark ? '#111' : '#f9f9f9',
+                                        color: isDark ? '#fff' : '#000',
+                                        outline: 'none',
+                                        fontSize: '16px',
+                                        transition: 'border-color 0.2s'
+                                    }}
+                                    required
+                                />
+                                <button
+                                    type="button"
+                                    onClick={() => setShowPassword(!showPassword)}
+                                    style={{
+                                        position: 'absolute',
+                                        right: '15px',
+                                        background: 'none',
+                                        border: 'none',
+                                        cursor: 'pointer',
+                                        padding: '4px',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        color: isDark ? '#555' : '#999',
+                                        transition: 'color 0.2s'
+                                    }}
+                                    onMouseEnter={(e) => (e.currentTarget.style.color = '#3b82f6')}
+                                    onMouseLeave={(e) => (e.currentTarget.style.color = isDark ? '#555' : '#999')}
+                                >
+                                    {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                                </button>
+                            </div>
                         </div>
+
+                        {formError && activeTab === 'web2' && (
+                            <div style={{
+                                backgroundColor: isDark ? '#450a0a' : '#fee2e2',
+                                color: isDark ? '#f87171' : '#ef4444',
+                                padding: '12px 16px',
+                                borderRadius: '8px',
+                                fontSize: '14px',
+                                border: `1px solid ${isDark ? '#991b1b' : '#fecaca'}`
+                            }}>
+                                {formError}
+                            </div>
+                        )}
 
                         <button type="submit" style={{ padding: '14px', backgroundColor: 'var(--accent-primary)', color: '#fff', border: 'none', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer', marginTop: '10px', fontSize: '16px', transition: 'all 0.2s' }}>
                             Sign In
@@ -270,6 +334,7 @@ const Login = () => {
                     Don't have an account? <Link href={`/signup${router.query.redirect ? `?redirect=${router.query.redirect}` : ''}`} style={{ color: 'var(--accent-primary)', textDecoration: 'none', fontWeight: 'bold' }}>Sign up</Link>
                 </p>
             </div>
+
             <CreatorCovenantModal
                 isOpen={showCovenant}
                 onAccept={handleAcceptCovenant}

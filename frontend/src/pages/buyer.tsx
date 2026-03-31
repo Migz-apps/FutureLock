@@ -3,6 +3,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
 import { useFutureLock } from '../hooks/useFutureLock';
 import { useRouter } from 'next/router';
+import { getErrorMessage } from '../utils/errorHandler';
 
 const BuyerPortal = () => {
     const { isAuthenticated, role } = useAuth();
@@ -20,9 +21,9 @@ const BuyerPortal = () => {
     const handleBuy = async (id: string, price: string) => {
         try {
             await purchaseInsight(id, price);
-            alert("Purchase transaction initiated in Wallet.");
+            alert("Transaction initiated");
         } catch (err) {
-            console.error(err);
+            alert(getErrorMessage(err));
         }
     };
 

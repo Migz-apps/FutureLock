@@ -11,7 +11,7 @@ export default function Marketplace() {
   useEffect(() => {
     const fetchInsights = async () => {
       try {
-        const response = await axios.get('http://127.0.0.1:8081/api/v1/intel/public');
+        const response = await axios.get('process.env.NEXT_PUBLIC_BACKEND_URL/api/v1/intel/public');
         setInsights(response.data);
       } catch (error) {
         console.error("Failed to fetch insights from FastAPI", error);

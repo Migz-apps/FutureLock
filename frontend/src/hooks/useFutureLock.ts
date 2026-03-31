@@ -3,6 +3,7 @@
 import { useChainId, useWriteContract } from 'wagmi';
 import { parseEther } from 'viem';
 import FutureLockABI from '../abis/FutureLock.json';
+import { getErrorMessage } from '../utils/errorHandler';
 
 // Configuration from environment variables
 const CONTRACT_ADDRESS = (process.env.NEXT_PUBLIC_CONTRACT_ADDRESS || "0x0") as `0x${string}`;
@@ -21,15 +22,15 @@ export const useFutureLock = () => {
   const purchaseInsight = async (insightId: string, priceInEth: string) => {
     // 1. Network Validation
     if (chainId !== EXPECTED_CHAIN_ID) {
-      const errorMsg = `Wrong Network! Please switch to Chain ID: ${EXPECTED_CHAIN_ID}`;
-      console.error(errorMsg);
+      const errorMsg = getErrorMessage({ message: `Wrong Network! Please switch to Chain ID: ${EXPECTED_CHAIN_ID}` });
       alert(errorMsg);
       return;
     }
 
     // 2. Contract Address Validation
     if (!CONTRACT_ADDRESS || CONTRACT_ADDRESS === "0x0") {
-      console.error("Critical Error: Contract address is missing in .env.local");
+      const errorMsg = getErrorMessage({ message: "Contract address missing" });
+      alert(errorMsg);
       return;
     }
 
@@ -46,7 +47,8 @@ export const useFutureLock = () => {
       } as any);
 
     } catch (err) {
-      console.error("Failed to initiate transaction:", err);
+      const errorMsg = getErrorMessage(err);
+      alert(errorMsg);
     }
   };
 

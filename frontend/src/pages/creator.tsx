@@ -74,7 +74,7 @@ const CreatorPortal = () => {
                 setAnalytics(data);
 
                 // Actual connection fetch:
-                const res = await fetch('http://127.0.0.1:8081/api/creator/analytics', { credentials: 'include' });
+                const res = await fetch('process.env.NEXT_PUBLIC_BACKEND_URL/api/creator/analytics', { credentials: 'include' });
                 if (res.ok) {
                     const realData = await res.json();
                     setAnalytics(realData);

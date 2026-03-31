@@ -22,7 +22,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     useEffect(() => {
         // Check auth status from backend
-        fetch('http://127.0.0.1:8081/auth/me', { credentials: 'include' })
+        fetch('process.env.NEXT_PUBLIC_BACKEND_URL/auth/me', { credentials: 'include' })
             .then(res => {
                 if (res.ok) return res.json();
                 throw new Error('Not authenticated');
@@ -49,7 +49,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
 
     const logout = () => {
-        fetch('http://127.0.0.1:8081/auth/logout', { credentials: 'include' }).finally(() => {
+        fetch('process.env.NEXT_PUBLIC_BACKEND_URL/auth/logout', { credentials: 'include' }).finally(() => {
             setIsAuthenticated(false);
             setRole(null);
             setIdentityType(null);

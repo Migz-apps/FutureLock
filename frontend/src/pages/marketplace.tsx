@@ -5,6 +5,7 @@ import { useFutureLock } from '../hooks/useFutureLock';
 import { useRouter } from 'next/router';
 import { ChevronDown, Search, Filter, Check } from 'lucide-react';
 import PaymentSimulator from '../components/PaymentSimulator';
+import { getErrorMessage } from '../utils/errorHandler';
 
 interface IntelMetadata {
     id: string;
@@ -91,9 +92,9 @@ const Marketplace = () => {
     const handleWeb3Buy = async (id: string, price: string) => {
         try {
             await purchaseInsight(id, price);
-            alert("Purchase transaction initiated in Wallet. Awaiting decryption...");
+            alert("Transaction initiated");
         } catch (err) {
-            console.error(err);
+            alert(getErrorMessage(err));
         }
     };
 

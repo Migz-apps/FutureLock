@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import api from '../services/api';
+import { getErrorMessage } from '../utils/errorHandler';
 
 // 1. We update the Interface to include the missing pieces
 interface Props {
@@ -51,8 +52,7 @@ const VerificationModal: React.FC<Props> = ({
             completeActualRegistration(signupData);
         }
     } catch (err) {
-        // This now works because of the useState added above
-        setVerificationError("Invalid or expired code.");
+        setVerificationError(getErrorMessage(err));
     }
   };
 

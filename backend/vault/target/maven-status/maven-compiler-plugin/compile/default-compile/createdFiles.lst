@@ -11,6 +11,7 @@ com\futurelock\vault\controller\DecryptRequest.class
 com\futurelock\vault\dto\IntelResponse.class
 com\futurelock\vault\repository\PurchaseHistoryRepository.class
 com\futurelock\vault\service\RateLimiterService$VerificationData.class
+com\example\demo\config\CorsConfig.class
 com\futurelock\vault\model\Rating.class
 com\futurelock\vault\repository\IntelMetadataRepository.class
 com\futurelock\vault\controller\WalletLoginData.class
