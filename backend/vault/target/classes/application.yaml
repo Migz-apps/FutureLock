@@ -1,58 +1,59 @@
 server:
   port: 8081
-  netty:
-    connection-timeout: 2s
-    idle-timeout: 20s
   compression:
     enabled: true
 
 spring:
   application:
     name: vault
+
   threads:
     virtual:
       enabled: true
+
   r2dbc:
-    url: r2dbc:postgresql://localhost:5432/futurelock
-    username: postgres
-    password: margarine
+    url: ${DB_URL:r2dbc:postgresql://localhost:5432/futurelock}
+    username: ${DB_USERNAME:postgres}
+    password: ${DB_PASSWORD:}
     pool:
-      initial-size: 100
-      max-size: 5000
+      initial-size: 5
+      max-size: 50
       max-idle-time: 30m
-      validation-query: SELECT 1
+
   main:
-    lazy-initialization: true
+    lazy-initialization: false
 
-  resilience4j.circuitbreaker:
-    instances:
-      marketplaceService:
-        registerHealthIndicator: true
-        slidingWindowSize: 1000
-        minimumNumberOfCalls: 500
-        wait-duration: 5s
-        failure-rate-threshold: 50
+  mail:
+    host: ${MAIL_HOST:smtp.gmail.com}
+    port: ${MAIL_PORT:587}
+    username: ${MAIL_USERNAME:}
+    password: ${MAIL_PASSWORD:}
+    properties:
+      mail.smtp.auth: true
+      mail.smtp.starttls.enable: true
+      mail.smtp.starttls.required: true
+      mail.smtp.connectiontimeout: 10000
+      mail.smtp.timeout: 10000
+      mail.smtp.writetimeout: 10000
 
-    silence4j.ratelimiter:
-      instances:
-        apiRatelimiter:
-          limitForPeriod: 5000000
-          limitRefreshPeriod: 1s
-          timeoutDuration: 100ms
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,metrics
 
-    management:
-      endpoints:
-        web:
-          exposure:
-            include: health,metrics
-        health:
-          show-details: ALWAYS
+  endpoint:
+    health:
+      show-details: always
 
-    mail:
-      host: smtp.example.com
-      port: 587
-      username: ${MAIL_USERNAME}
-      password: ${MAIL_PASSWORD}
-      properties:
-        mail.smtp.auth: true
-        mail.smtp.starttls.enable: true
+app:
+  cors:
+    allowed-origins: ${FRONTEND_ORIGINS:http://localhost:3000}
+
+  mail:
+    enabled: ${MAIL_ENABLED:true}
+
+  jwt:
+    secret: ${JWT_SECRET:FutureLockDevelopmentSecretKeyChangeThisBeforeProduction1234567890}
+    access-token-minutes: 15
+    refresh-token-days: 7

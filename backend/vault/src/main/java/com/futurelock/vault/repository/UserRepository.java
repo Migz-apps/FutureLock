@@ -1,10 +1,8 @@
 package com.futurelock.vault.repository;
 
-import com.futurelock.vault.model.*;
+import com.futurelock.vault.model.User;
 import org.springframework.data.repository.reactive.ReactiveCrudRepository;
 import reactor.core.publisher.Mono;
-import reactor.core.publisher.Flux;
-import org.springframework.stereotype.Repository;
 
 import java.util.UUID;
 

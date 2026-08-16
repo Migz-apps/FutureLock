@@ -2,190 +2,282 @@ package com.futurelock.vault.controller;
 
 import com.futurelock.vault.model.User;
 import com.futurelock.vault.repository.UserRepository;
+import com.futurelock.vault.service.AuthService;
+import com.futurelock.vault.service.EmailService;
+import com.futurelock.vault.service.EmailVerificationService;
 import com.futurelock.vault.service.JwtService;
+import com.futurelock.vault.service.RateLimiterService;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Mono;
-import com.futurelock.vault.dto.AuthResponse;
-import com.futurelock.vault.dto.LoginRequest;
-import com.futurelock.vault.dto.SignupRequest;
-import com.futurelock.vault.dto.WalletLoginRequest;
-import com.futurelock.vault.service.AuthService;
-import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
-import com.futurelock.vault.service.EmailVerificationService;
-import com.futurelock.vault.service.RateLimiterService;
-import com.futurelock.vault.service.EmailService;
-import com.futurelock.vault.dto.EmailVerifyRequest;
-import org.springframework.beans.factory.annotation.Autowired;
 
 import java.time.Duration;
 import java.util.Map;
-import java.util.UUID;
 
 @RestController
 @RequestMapping("/auth")
 public class AuthController {
 
+    private final AuthService authService;
     private final UserRepository userRepository;
     private final JwtService jwtService;
-    private final PasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
+    private final EmailVerificationService emailVerificationService;
+    private final RateLimiterService rateLimiterService;
+    private final EmailService emailService;
 
-    @Autowired
-    private EmailVerificationService emailVerificationService;
-
-    @Autowired
-    private RateLimiterService rateLimiterService;
-
-    @Autowired
-    private EmailService emailService;
-
-    public AuthController(UserRepository userRepository, JwtService jwtService) {
+    public AuthController(
+            AuthService authService,
+            UserRepository userRepository,
+            JwtService jwtService,
+            EmailVerificationService emailVerificationService,
+            RateLimiterService rateLimiterService,
+            EmailService emailService) {
+        this.authService = authService;
         this.userRepository = userRepository;
         this.jwtService = jwtService;
+        this.emailVerificationService = emailVerificationService;
+        this.rateLimiterService = rateLimiterService;
+        this.emailService = emailService;
     }
 
-    private HttpHeaders setCookies(String access, String refresh) {
-        HttpHeaders headers = new HttpHeaders();
-        headers.add(HttpHeaders.SET_COOKIE, ResponseCookie.from("access_token", access)
-                .httpOnly(true).maxAge(Duration.ofMinutes(15)).path("/").sameSite("Lax").build().toString());
-        headers.add(HttpHeaders.SET_COOKIE, ResponseCookie.from("refresh_token", refresh)
-                .httpOnly(true).maxAge(Duration.ofDays(7)).path("/").sameSite("Lax").build().toString());
-        return headers;
+    @PostMapping("/request-verification")
+    public Mono<ResponseEntity<Map<String, String>>> requestVerification(
+            @RequestBody EmailRequest request) {
+
+        String email = normalizeEmail(request.email());
+
+        return userRepository.findByEmail(email)
+                .flatMap(existing -> Mono.<ResponseEntity<Map<String, String>>>error(
+                        new IllegalStateException("Email already registered.")))
+                .switchIfEmpty(
+                        emailVerificationService.verifyAndGenerateCode(email)
+                                .flatMap(code -> rateLimiterService.checkLimitAndStore(email, code)
+                                        .then(emailService.sendVerificationEmail(email, code)))
+                                .thenReturn(ResponseEntity.ok(
+                                        Map.of("message", "Verification code sent."))));
     }
 
-    @PostMapping("/signup")
-    public Mono<ResponseEntity<Map<String, String>>> signup(@RequestBody SignupData data) {
-        return userRepository.findByUsername(data.username().toLowerCase())
-                .flatMap(u -> Mono.<ResponseEntity<Map<String, String>>>error(new RuntimeException("Username claimed")))
-                .switchIfEmpty(userRepository.findByEmail(data.email())
-                        .flatMap(u -> Mono.<ResponseEntity<Map<String, String>>>error(new RuntimeException("Email registered")))
-                        .switchIfEmpty(Mono.defer(() -> {
-                            User newUser = new User(UUID.randomUUID(), data.username().toLowerCase(), data.email(),
-                                    passwordEncoder.encode(data.password()), null, data.role(), 0.0, 0L, 0.0, 0.0, UUID.randomUUID().toString());
-                            return userRepository.save(newUser).map(saved -> {
-                                String access = jwtService.generateAccessToken(saved.email());
-                                String refresh = jwtService.generateRefreshToken(saved.email());
-                                return ResponseEntity.ok().headers(setCookies(access, refresh))
-                                        .body(Map.of("message", "Signup successful", "role", saved.role(), "identityType", "email", "identity", saved.email()));
-                            });
-                        }))
-                );
-    }
+    @PostMapping("/confirm-code")
+    public Mono<ResponseEntity<Map<String, Object>>> confirmCode(
+            @RequestBody VerifyCodeRequest request) {
 
-    @PostMapping("/login")
-    public Mono<ResponseEntity<Map<String, String>>> login(@RequestBody LoginData data) {
-        return userRepository.findByEmail(data.email())
-                .filter(u -> u.hashedPassword() != null && passwordEncoder.matches(data.password(), u.hashedPassword()))
-                .map(user -> {
-                    String access = jwtService.generateAccessToken(user.email());
-                    String refresh = jwtService.generateRefreshToken(user.email());
-                    return ResponseEntity.ok().headers(setCookies(access, refresh))
-                            .body(Map.of("message", "Login successful", "role", user.role(), "identityType", "email", "identity", user.email()));
-                })
-                .switchIfEmpty(Mono.error(new RuntimeException("Incorrect email or password")));
-    }
+        return rateLimiterService.validateCode(
+                        normalizeEmail(request.email()),
+                        request.code() == null ? "" : request.code().trim())
+                .flatMap(valid -> {
+                    if (!valid) {
+                        return Mono.error(new IllegalArgumentException(
+                                "Invalid verification code."));
+                    }
 
-    @PostMapping("/wallet-login")
-    public Mono<ResponseEntity<Map<String, String>>> walletLogin(@RequestBody WalletLoginData data) {
-        return userRepository.findByWalletAddress(data.walletAddress())
-                .switchIfEmpty(Mono.defer(() -> {
-                    if (data.username() == null) return Mono.error(new RuntimeException("Username required"));
-                    return userRepository.findByUsername(data.username().toLowerCase())
-                            .flatMap(u -> Mono.<User>error(new RuntimeException("Username claimed")))
-                            .switchIfEmpty(Mono.defer(() -> {
-                                User newUser = new User(UUID.randomUUID(), data.username().toLowerCase(), null, null,
-                                        data.walletAddress(), data.role(), 0.0, 0L, 0.0, 0.0, UUID.randomUUID().toString());
-                                return userRepository.save(newUser);
-                            }));
-                }))
-                .map(user -> {
-                    String access = jwtService.generateAccessToken(user.walletAddress());
-                    String refresh = jwtService.generateRefreshToken(user.walletAddress());
-                    return ResponseEntity.ok().headers(setCookies(access, refresh))
-                            .body(Map.of("message", "Wallet login successful", "role", user.role(), "identityType", "wallet", "identity", user.walletAddress()));
+                    return Mono.just(ResponseEntity.ok(
+                            Map.<String, Object>of(
+                                    "verified", true,
+                                    "message", "Email verified.")));
                 });
     }
 
+    @PostMapping("/signup")
+    public Mono<ResponseEntity<Map<String, String>>> signup(
+            @RequestBody SignupData data) {
+
+        String email = normalizeEmail(data.email());
+
+        return rateLimiterService.consumeVerifiedEmail(email)
+                .then(authService.signup(
+                        data.username(),
+                        email,
+                        data.password(),
+                        data.role()))
+                .map(user -> authenticatedResponse(user, "Signup successful"));
+    }
+
+    @PostMapping("/login")
+    public Mono<ResponseEntity<Map<String, String>>> login(
+            @RequestBody LoginData data) {
+
+        return authService.authenticateEmail(data.email(), data.password())
+                .map(user -> authenticatedResponse(user, "Login successful"));
+    }
+
+    @PostMapping("/wallet-login")
+    public Mono<ResponseEntity<Map<String, String>>> walletLogin(
+            @RequestBody WalletLoginData data) {
+
+        return authService.walletLogin(
+                        data.walletAddress(),
+                        data.username(),
+                        data.role())
+                .map(user -> authenticatedResponse(user, "Wallet login successful"));
+    }
+
     @PostMapping("/refresh")
-    public Mono<ResponseEntity<Map<String, String>>> refresh(@CookieValue(value = "refresh_token", defaultValue = "") String refreshToken) {
-        if (refreshToken.isEmpty() || !jwtService.isRefreshToken(refreshToken)) {
-            return Mono.error(new RuntimeException("Invalid refresh token"));
+    public Mono<ResponseEntity<Map<String, String>>> refresh(
+            @CookieValue(value = "refresh_token", defaultValue = "") String refreshToken) {
+
+        if (refreshToken.isBlank() || !jwtService.isRefreshToken(refreshToken)) {
+            return Mono.error(new IllegalArgumentException("Invalid refresh token."));
         }
-        
-        String subject = jwtService.extractSubject(refreshToken);
-        
+
+        String subject;
+        try {
+            subject = jwtService.extractSubject(refreshToken);
+        } catch (Exception ex) {
+            return Mono.error(new IllegalArgumentException("Invalid refresh token."));
+        }
+
         return userRepository.findByEmail(subject)
                 .switchIfEmpty(userRepository.findByWalletAddress(subject))
                 .map(user -> {
-                    String identifier = user.email() != null ? user.email() : user.walletAddress();
+                    String identifier = identity(user);
                     String access = jwtService.generateAccessToken(identifier);
+
                     HttpHeaders headers = new HttpHeaders();
-                    headers.add(HttpHeaders.SET_COOKIE, ResponseCookie.from("access_token", access)
-                            .httpOnly(true).maxAge(Duration.ofMinutes(15)).path("/").sameSite("Lax").build().toString());
-                    return ResponseEntity.ok().headers(headers).body(Map.of("message", "Token refreshed"));
+                    headers.add(HttpHeaders.SET_COOKIE,
+                            accessCookie(access).toString());
+
+                    return ResponseEntity.ok()
+                            .headers(headers)
+                            .body(Map.of("message", "Token refreshed"));
                 })
-                .switchIfEmpty(Mono.error(new RuntimeException("User not found")));
+                .switchIfEmpty(Mono.error(
+                        new IllegalArgumentException("User not found.")));
     }
 
     @GetMapping("/me")
-    public Mono<ResponseEntity<Map<String, Object>>> me(@AuthenticationPrincipal Jwt jwt) {
-        if (jwt == null || jwt.getSubject() == null) {
-            return Mono.error(new RuntimeException("Not authenticated"));
+    public Mono<ResponseEntity<Map<String, Object>>> me(
+            @CookieValue(value = "access_token", defaultValue = "") String accessToken) {
+
+        if (accessToken.isBlank()) {
+            return Mono.error(new IllegalArgumentException("Not authenticated."));
         }
-        
-        String subject = jwt.getSubject();
+
+        String subject;
+        try {
+            subject = jwtService.extractSubject(accessToken);
+        } catch (Exception ex) {
+            return Mono.error(new IllegalArgumentException(
+                    "Session expired or invalid."));
+        }
+
         return userRepository.findByEmail(subject)
                 .switchIfEmpty(userRepository.findByWalletAddress(subject))
-                .map(user -> {
-                    String identityType = user.email() != null ? "email" : "wallet";
-                    String identity = user.email() != null ? user.email() : user.walletAddress();
-                    return ResponseEntity.ok().body(Map.<String, Object>of(
-                            "id", user.id(),
-                            "username", user.username(),
-                            "role", user.role(),
-                            "identityType", identityType,
-                            "identity", identity,
-                            "trust_score", user.trustScore(),
-                            "ratings_count", user.ratingsCount()
-                    ));
-                })
-                .switchIfEmpty(Mono.error(new RuntimeException("User not found")));
+                .map(user -> ResponseEntity.ok(
+                        Map.<String, Object>of(
+                                "id", user.id(),
+                                "username", user.username(),
+                                "role", user.role(),
+                                "identityType", identityType(user),
+                                "identity", identity(user),
+                                "trust_score", user.trustScore(),
+                                "ratings_count", user.ratingsCount())))
+                .switchIfEmpty(Mono.error(
+                        new IllegalArgumentException("User not found.")));
     }
 
     @PostMapping("/logout")
     public Mono<ResponseEntity<Map<String, String>>> logout() {
         HttpHeaders headers = new HttpHeaders();
-        headers.add(HttpHeaders.SET_COOKIE, ResponseCookie.from("access_token", "").maxAge(0).path("/").build().toString());
-        headers.add(HttpHeaders.SET_COOKIE, ResponseCookie.from("refresh_token", "").maxAge(0).path("/").build().toString());
-        return Mono.just(ResponseEntity.ok().headers(headers).body(Map.of("message", "Logged out successfully")));
+
+        headers.add(HttpHeaders.SET_COOKIE,
+                ResponseCookie.from("access_token", "")
+                        .httpOnly(true)
+                        .maxAge(Duration.ZERO)
+                        .path("/")
+                        .sameSite("Lax")
+                        .build()
+                        .toString());
+
+        headers.add(HttpHeaders.SET_COOKIE,
+                ResponseCookie.from("refresh_token", "")
+                        .httpOnly(true)
+                        .maxAge(Duration.ZERO)
+                        .path("/")
+                        .sameSite("Lax")
+                        .build()
+                        .toString());
+
+        return Mono.just(
+                ResponseEntity.ok()
+                        .headers(headers)
+                        .body(Map.of("message", "Logged out successfully")));
     }
 
-    @PostMapping("/verify-email")
-    public Mono<ResponseEntity<String>> requestVerification(@RequestBody Map<String, String> request) {
-        String email = request.get("email");
-    
-        return emailVerificationService.verifyAndGenerateCode(email)
-            .flatMap(code -> rateLimiterService.checkLimitAndStore(email, code)
-                .then(emailService.sendVerificationEmail(email, code)) // We'll define this next
-                .thenReturn(ResponseEntity.ok("Verification code sent")))
-            .onErrorResume(e -> Mono.just(ResponseEntity.badRequest().body(e.getMessage())));
+    private ResponseEntity<Map<String, String>> authenticatedResponse(
+            User user,
+            String message) {
+
+        String identifier = identity(user);
+        String access = jwtService.generateAccessToken(identifier);
+        String refresh = jwtService.generateRefreshToken(identifier);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.add(HttpHeaders.SET_COOKIE, accessCookie(access).toString());
+        headers.add(HttpHeaders.SET_COOKIE, refreshCookie(refresh).toString());
+
+        return ResponseEntity.ok()
+                .headers(headers)
+                .body(Map.of(
+                        "message", message,
+                        "role", user.role(),
+                        "username", user.username(),
+                        "identityType", identityType(user),
+                        "identity", identifier));
     }
 
-    @PostMapping("/confirm-code")
-    public Mono<ResponseEntity<Boolean>> confirmCode(@RequestBody EmailVerifyRequest request) {
-        return rateLimiterService.validateCode(request.email(), request.code())
-            .map(isValid -> ResponseEntity.ok(isValid))
-            .onErrorResume(e -> Mono.just(ResponseEntity.status(401).body(false)));
+    private ResponseCookie accessCookie(String token) {
+        return ResponseCookie.from("access_token", token)
+                .httpOnly(true)
+                .secure(false) // Set true when frontend/backend use HTTPS.
+                .sameSite("Lax")
+                .path("/")
+                .maxAge(Duration.ofMinutes(15))
+                .build();
+    }
+
+    private ResponseCookie refreshCookie(String token) {
+        return ResponseCookie.from("refresh_token", token)
+                .httpOnly(true)
+                .secure(false) // Set true when frontend/backend use HTTPS.
+                .sameSite("Lax")
+                .path("/")
+                .maxAge(Duration.ofDays(7))
+                .build();
+    }
+
+    private String identity(User user) {
+        return user.email() != null ? user.email() : user.walletAddress();
+    }
+
+    private String identityType(User user) {
+        return user.email() != null ? "email" : "wallet";
+    }
+
+    private String normalizeEmail(String email) {
+        return email == null ? "" : email.trim().toLowerCase();
+    }
+
+    public record EmailRequest(String email) {
+    }
+
+    public record VerifyCodeRequest(String email, String code) {
+    }
+
+    public record SignupData(
+            String username,
+            String email,
+            String password,
+            String role) {
+    }
+
+    public record LoginData(String email, String password, String role) {
+    }
+
+    public record WalletLoginData(
+            String username,
+            String walletAddress,
+            String role) {
     }
 }
-
-record SignupData(String username, String email, String password, String role) {}
-record LoginData(String email, String password) {}
-record WalletLoginData(String username, String walletAddress, String role) {}
