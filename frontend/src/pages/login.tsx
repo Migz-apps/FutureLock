@@ -102,10 +102,13 @@ const Login = () => {
             );
 
             return parseApiResponse<{
-                message: string;
-                role: string;
+                message?: string;
+                accessToken: string;
+                refreshToken: string;
+                userId?: string;
                 username?: string;
-                identityType: string;
+                role: string;
+                identityType: 'email' | 'wallet';
                 identity: string;
             }>(response);
         });
@@ -116,6 +119,16 @@ const Login = () => {
         }
 
         const data = result.data!;
+
+        if (!data.accessToken) {
+            setFormError('The server did not return an access token.');
+            return;
+        }
+
+        localStorage.setItem('futurelock_access_token', data.accessToken);
+        if (data.refreshToken) {
+            localStorage.setItem('futurelock_refresh_token', data.refreshToken);
+        }
 
         finishLogin(
             data.role || role,
@@ -195,8 +208,10 @@ const Login = () => {
                     );
 
                     return parseApiResponse<{
+                        accessToken: string;
+                        refreshToken: string;
                         role: string;
-                        identityType: string;
+                        identityType: 'email' | 'wallet';
                         identity: string;
                     }>(response);
                 }
@@ -208,6 +223,16 @@ const Login = () => {
             }
 
             const data = result.data!;
+
+            if (!data.accessToken) {
+                setFormError('The server did not return an access token.');
+                return;
+            }
+
+            localStorage.setItem('futurelock_access_token', data.accessToken);
+            if (data.refreshToken) {
+                localStorage.setItem('futurelock_refresh_token', data.refreshToken);
+            }
 
             finishLogin(
                 data.role || 'Creator',

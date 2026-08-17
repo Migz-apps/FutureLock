@@ -1,85 +1,91 @@
-# =================================================================
-# 1. IDE & OS (Unified)
-# =================================================================
-.vscode/
-.idea/
-*.swp
-*.bak
-.DS_Store
-Thumbs.db
+# ============================================================
+# ENVIRONMENT VARIABLES / SECRETS
+# ============================================================
 
-# =================================================================
-# 2. Java & Spring Boot (Backend)
-# =================================================================
-# Compiled class files
-java-backend/target/
-*.class
-
-# Log files
-java-backend/logs/
-*.log
-
-# Sensitive Configuration
-# Keep application.yml in git ONLY if it contains non-sensitive defaults.
-# If you put DB passwords or API keys in it, add it below:
-# java-backend/src/main/resources/application.yml
-
-# Package files
-*.jar
-*.war
-*.ear
-*.zip
-*.tar.gz
-*.rar
-
-# Maven specific
-.mvn/
-mvnw
-mvnw.cmd
-
-# =================================================================
-# 3. Node.js & Next.js (Frontend)
-# =================================================================
-node_modules/
-frontend/node_modules/
-.next/
-frontend/.next/
-frontend/out/
-frontend/build/
-
-# Debug logs
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-.pnpm-debug.log*
-
-# =================================================================
-# 4. Hardhat & Blockchain
-# =================================================================
-blockchain/artifacts/
-blockchain/cache/
-blockchain/typechain/
-blockchain/typechain-types/
-blockchain/coverage/
-blockchain/coverage.json
-
-# =================================================================
-# 5. Security & Environment (CRITICAL)
-# =================================================================
-# General Env files
 .env
 .env.*
 !.env.example
-secret.json
 
-# Java/Spring specific secrets
-java-backend/src/main/resources/application-*.yml
-java-backend/src/main/resources/*.p12
-java-backend/src/main/resources/*.jks
-java-backend/src/main/resources/*.pem
+**/.env
+**/.env.*
+!**/.env.example
 
-# Blockchain secrets
-blockchain/.env
+*.pem
+*.key
+*.p12
+*.pfx
 
-#backend secrets
-backend/vault/.env
+
+# ============================================================
+# NEXT.JS / NODE
+# ============================================================
+
+node_modules/
+**/node_modules/
+
+.next/
+**/.next/
+
+out/
+dist/
+
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+.vercel/
+
+
+# ============================================================
+# JAVA / MAVEN / SPRING
+# ============================================================
+
+target/
+**/target/
+
+*.class
+*.jar
+*.war
+
+.mvn/timing.properties
+
+
+# ============================================================
+# IDE / EDITOR
+# ============================================================
+
+.idea/
+*.iml
+
+.vscode/
+
+*.swp
+*.swo
+
+
+# ============================================================
+# OPERATING SYSTEM
+# ============================================================
+
+.DS_Store
+Thumbs.db
+desktop.ini
+
+
+# ============================================================
+# LOGS
+# ============================================================
+
+*.log
+logs/
+
+
+# ============================================================
+# TEMP FILES
+# ============================================================
+
+tmp/
+temp/
+*.tmp
+*.bak

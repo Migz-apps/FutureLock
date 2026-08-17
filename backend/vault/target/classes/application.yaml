@@ -1,9 +1,15 @@
 server:
-  port: 8081
+  port: ${PORT:8081}
+
   compression:
     enabled: true
 
+
 spring:
+
+  config:
+    import: "optional:file:./.env[.properties]"
+
   application:
     name: vault
 
@@ -12,12 +18,13 @@ spring:
       enabled: true
 
   r2dbc:
-    url: ${DB_URL:r2dbc:postgresql://localhost:5432/futurelock}
-    username: ${DB_USERNAME:postgres}
-    password: ${DB_PASSWORD:}
+    url: ${DB_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+
     pool:
-      initial-size: 5
-      max-size: 50
+      initial-size: ${DB_POOL_INITIAL_SIZE:5}
+      max-size: ${DB_POOL_MAX_SIZE:50}
       max-idle-time: 30m
 
   main:
@@ -26,27 +33,33 @@ spring:
   mail:
     host: ${MAIL_HOST:smtp.gmail.com}
     port: ${MAIL_PORT:587}
-    username: ${MAIL_USERNAME:}
-    password: ${MAIL_PASSWORD:}
+    username: ${MAIL_USERNAME}
+    password: ${MAIL_PASSWORD}
+
     properties:
       mail.smtp.auth: true
       mail.smtp.starttls.enable: true
       mail.smtp.starttls.required: true
+
       mail.smtp.connectiontimeout: 10000
       mail.smtp.timeout: 10000
       mail.smtp.writetimeout: 10000
 
+
 management:
+
   endpoints:
     web:
       exposure:
-        include: health,metrics
+        include: health
 
   endpoint:
     health:
-      show-details: always
+      show-details: never
+
 
 app:
+
   cors:
     allowed-origins: ${FRONTEND_ORIGINS:http://localhost:3000}
 
@@ -54,6 +67,9 @@ app:
     enabled: ${MAIL_ENABLED:true}
 
   jwt:
-    secret: ${JWT_SECRET:FutureLockDevelopmentSecretKeyChangeThisBeforeProduction1234567890}
+    secret: ${JWT_SECRET}
     access-token-minutes: 15
     refresh-token-days: 7
+
+  security:
+    secure-cookies: ${SECURE_COOKIES:false}
