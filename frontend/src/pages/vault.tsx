@@ -51,7 +51,7 @@ const Vault = () => {
         const fetchArchive = async () => {
             setLoading(true);
             try {
-                const res = await fetch('process.env.NEXT_PUBLIC_BACKEND_URL/api/buyer/vault', { credentials: 'include' });
+                const res = await fetch('/process.env.NEXT_PUBLIC_BACKEND_URL/api/buyer/vault', { credentials: 'include' });
                 if (res.ok) {
                     const data = await res.json();
                     if (isMounted) setVaultList(data);

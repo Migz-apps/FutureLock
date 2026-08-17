@@ -311,8 +311,10 @@ const Signup = () => {
                             );
 
                         return parseApiResponse<{
+                            message?: string;
                             role: string;
-                            identityType: string;
+                            username?: string;
+                            identityType: 'email' | 'wallet';
                             identity: string;
                         }>(
                             signupResponse
@@ -330,18 +332,12 @@ const Signup = () => {
                 return;
             }
 
-            const data =
-                result.data!;
+            const data = result.data!;
 
             finishLogin(
-                data.role ||
-                    pendingSignup.role,
-
-                data.identityType ||
-                    'email',
-
-                data.identity ||
-                    pendingSignup.email
+                data.role || pendingSignup.role,
+                data.identityType || 'email',
+                data.identity || pendingSignup.email
             );
         };
 
@@ -458,8 +454,10 @@ const Signup = () => {
                                 );
 
                             return parseApiResponse<{
+                                message?: string;
                                 role: string;
-                                identityType: string;
+                                username?: string;
+                                identityType: 'email' | 'wallet';
                                 identity: string;
                             }>(
                                 response

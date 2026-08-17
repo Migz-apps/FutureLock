@@ -3,83 +3,218 @@ package com.futurelock.vault.service;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 
+import java.time.Duration;
 import java.time.Instant;
+import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Service
 public class RateLimiterService {
 
-    private static final int MAX_REQUESTS_PER_HOUR = 6;
-    private static final long CODE_TTL_SECONDS = 120;
-    private static final long VERIFIED_TTL_SECONDS = 600;
+    private static final Duration CODE_LIFETIME = Duration.ofMinutes(5);
+    private static final Duration REQUEST_WINDOW = Duration.ofHours(1);
+    private static final int MAX_REQUESTS_PER_WINDOW = 6;
 
-    private final Map<String, VerificationData> storage = new ConcurrentHashMap<>();
-    private final Map<String, Instant> verifiedEmails = new ConcurrentHashMap<>();
+    private final Map<String, VerificationData> verificationStorage =
+            new ConcurrentHashMap<>();
 
     private record VerificationData(
             String code,
-            Instant expiry,
-            int requestsInWindow,
-            Instant windowStart) {
+            Instant expiresAt,
+            int requestCount,
+            Instant windowStartedAt,
+            boolean verified
+    ) {
     }
 
-    public Mono<Void> checkLimitAndStore(String rawEmail, String code) {
-        String email = normalize(rawEmail);
-        Instant now = Instant.now();
+    /**
+     * Stores a newly generated verification code.
+     *
+     * Calling this again for the same email replaces the previous code
+     * and resets the verified flag.
+     */
+    public Mono<Void> checkLimitAndStore(
+            String rawEmail,
+            String code
+    ) {
+        return Mono.fromRunnable(() -> {
 
-        VerificationData current = storage.get(email);
+            String email = normalizeEmail(rawEmail);
 
-        if (current == null || current.windowStart().plusSeconds(3600).isBefore(now)) {
-            current = new VerificationData(null, null, 0, now);
-        }
+            if (email.isBlank()) {
+                throw new IllegalArgumentException(
+                        "Email is required."
+                );
+            }
 
-        if (current.requestsInWindow() >= MAX_REQUESTS_PER_HOUR) {
-            return Mono.error(new IllegalStateException(
-                    "Too many verification requests. Please try again later."));
-        }
+            if (code == null || code.isBlank()) {
+                throw new IllegalArgumentException(
+                        "Verification code is required."
+                );
+            }
 
-        storage.put(email, new VerificationData(
-                code,
-                now.plusSeconds(CODE_TTL_SECONDS),
-                current.requestsInWindow() + 1,
-                current.windowStart()));
+            Instant now = Instant.now();
 
-        return Mono.empty();
+            verificationStorage.compute(email, (key, existing) -> {
+
+                int requestCount = 0;
+                Instant windowStartedAt = now;
+
+                if (existing != null) {
+
+                    boolean windowExpired =
+                            existing.windowStartedAt()
+                                    .plus(REQUEST_WINDOW)
+                                    .isBefore(now);
+
+                    if (!windowExpired) {
+                        requestCount =
+                                existing.requestCount();
+
+                        windowStartedAt =
+                                existing.windowStartedAt();
+                    }
+                }
+
+                if (requestCount >= MAX_REQUESTS_PER_WINDOW) {
+                    throw new IllegalStateException(
+                            "Too many verification requests. Please try again later."
+                    );
+                }
+
+                return new VerificationData(
+                        code,
+                        now.plus(CODE_LIFETIME),
+                        requestCount + 1,
+                        windowStartedAt,
+                        false
+                );
+            });
+        });
     }
 
-    public Mono<Boolean> validateCode(String rawEmail, String userInput) {
-        String email = normalize(rawEmail);
-        VerificationData data = storage.get(email);
+    /**
+     * Checks the code without removing the verification record.
+     *
+     * If the code is correct, the same record is updated with
+     * verified=true so the subsequent /auth/signup request can consume it.
+     */
+    public Mono<Boolean> validateCode(
+            String rawEmail,
+            String rawCode
+    ) {
+        return Mono.defer(() -> {
 
-        if (data == null || data.code() == null || data.expiry() == null
-                || data.expiry().isBefore(Instant.now())) {
-            return Mono.error(new IllegalArgumentException(
-                    "Code expired or not found. Please request a new one."));
-        }
+            String email =
+                    normalizeEmail(rawEmail);
 
-        if (!data.code().equals(userInput)) {
-            return Mono.just(false);
-        }
+            String code =
+                    rawCode == null
+                            ? ""
+                            : rawCode.trim();
 
-        verifiedEmails.put(email, Instant.now().plusSeconds(VERIFIED_TTL_SECONDS));
-        storage.remove(email);
-        return Mono.just(true);
+            VerificationData data =
+                    verificationStorage.get(email);
+
+            if (data == null) {
+                return Mono.error(
+                        new IllegalArgumentException(
+                                "Code expired or not found. Please request a new one."
+                        )
+                );
+            }
+
+            Instant now = Instant.now();
+
+            if (data.expiresAt().isBefore(now)) {
+
+                verificationStorage.remove(email);
+
+                return Mono.error(
+                        new IllegalArgumentException(
+                                "Verification code has expired. Please request a new one."
+                        )
+                );
+            }
+
+            if (!data.code().equals(code)) {
+                return Mono.just(false);
+            }
+
+            verificationStorage.put(
+                    email,
+                    new VerificationData(
+                            data.code(),
+                            data.expiresAt(),
+                            data.requestCount(),
+                            data.windowStartedAt(),
+                            true
+                    )
+            );
+
+            return Mono.just(true);
+        });
     }
 
-    public Mono<Void> consumeVerifiedEmail(String rawEmail) {
-        String email = normalize(rawEmail);
-        Instant expiry = verifiedEmails.remove(email);
+    /**
+     * Called immediately before account creation.
+     *
+     * Signup is allowed only after /auth/confirm-code has marked
+     * the email as verified.
+     *
+     * The record is removed only after successful consumption.
+     */
+    public Mono<Void> consumeVerifiedEmail(
+            String rawEmail
+    ) {
+        return Mono.defer(() -> {
 
-        if (expiry == null || expiry.isBefore(Instant.now())) {
-            return Mono.error(new IllegalStateException(
-                    "Email has not been verified or the verification has expired."));
-        }
+            String email =
+                    normalizeEmail(rawEmail);
 
-        return Mono.empty();
+            VerificationData data =
+                    verificationStorage.get(email);
+
+            if (data == null) {
+                return Mono.error(
+                        new IllegalArgumentException(
+                                "Email verification is required."
+                        )
+                );
+            }
+
+            if (data.expiresAt().isBefore(Instant.now())) {
+
+                verificationStorage.remove(email);
+
+                return Mono.error(
+                        new IllegalArgumentException(
+                                "Email verification has expired. Please request a new code."
+                        )
+                );
+            }
+
+            if (!data.verified()) {
+                return Mono.error(
+                        new IllegalArgumentException(
+                                "Please verify your email before creating the account."
+                        )
+                );
+            }
+
+            verificationStorage.remove(email);
+
+            return Mono.empty();
+        });
     }
 
-    private String normalize(String email) {
-        return email == null ? "" : email.trim().toLowerCase();
+    private String normalizeEmail(
+            String email
+    ) {
+        return email == null
+                ? ""
+                : email.trim()
+                .toLowerCase(Locale.ROOT);
     }
 }
