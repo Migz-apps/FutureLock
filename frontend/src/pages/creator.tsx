@@ -26,6 +26,7 @@ import React, {
   } from 'recharts';
   
   import { useAuth } from '../contexts/AuthContext';
+  import { apiFetch, parseApiResponse } from '../utils/errorHandler';
   
   interface ActiveLock {
     id: string;
@@ -49,14 +50,10 @@ import React, {
     active_locks: ActiveLock[];
   }
   
-  const BACKEND_URL = (
-    process.env.NEXT_PUBLIC_BACKEND_URL ||
-    'http://localhost:8081'
-  ).replace(/\/+$/, '');
-  
   const CreatorPortal = () => {
     const {
       isAuthenticated,
+      isLoading,
       role
     } = useAuth();
   
@@ -79,6 +76,10 @@ import React, {
         return;
       }
   
+      if (isLoading) {
+        return;
+      }
+
       if (!isAuthenticated) {
         router.replace(
           '/login?redirect=/creator'
@@ -153,21 +154,7 @@ import React, {
           };
   
           try {
-            const response =
-              await fetch(
-                `${BACKEND_URL}/api/creator/analytics`,
-                {
-                  method: 'GET',
-  
-                  credentials:
-                    'include',
-  
-                  headers: {
-                    Accept:
-                      'application/json'
-                  }
-                }
-              );
+            const response = await apiFetch('/api/creator/analytics');
   
             if (!response.ok) {
               throw new Error(
@@ -176,7 +163,7 @@ import React, {
             }
   
             const data: AnalyticsData =
-              await response.json();
+              await parseApiResponse(response);
   
             setAnalytics(data);
           } catch (error) {
@@ -192,6 +179,7 @@ import React, {
       fetchAnalytics();
     }, [
       isAuthenticated,
+      isLoading,
       role,
       router
     ]);
@@ -217,6 +205,7 @@ import React, {
     };
   
     if (
+      isLoading ||
       !isAuthenticated ||
       role !== 'Creator'
     ) {

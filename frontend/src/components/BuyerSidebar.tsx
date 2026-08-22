@@ -6,7 +6,6 @@ import {
   LayoutDashboard,
   Store,
   LockKeyhole,
-  History,
   LogOut,
   Moon,
   Sun,
@@ -120,14 +119,6 @@ export default function BuyerSidebar() {
             label="My Vault"
             icon={
               <LockKeyhole size={19} />
-            }
-          />
-
-          <SidebarLink
-            href="/purchase-history"
-            label="Purchase History"
-            icon={
-              <History size={19} />
             }
           />
 

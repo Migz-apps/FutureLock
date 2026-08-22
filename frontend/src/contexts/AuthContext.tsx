@@ -4,9 +4,11 @@ import React, {
     useEffect,
     useState
 } from 'react';
+import { apiFetch, parseApiResponse } from '../utils/errorHandler';
 
 interface AuthContextType {
     isAuthenticated: boolean;
+    isLoading: boolean;
     role: string | null;
     identityType: 'email' | 'wallet' | null;
     identity: string | null;
@@ -31,10 +33,6 @@ const AuthContext =
         undefined
     );
 
-const BACKEND_URL =
-    process.env.NEXT_PUBLIC_BACKEND_URL ||
-    'http://localhost:8081';
-
 export function AuthProvider({
     children
 }: {
@@ -45,6 +43,8 @@ export function AuthProvider({
         isAuthenticated,
         setIsAuthenticated
     ] = useState(false);
+
+    const [isLoading, setIsLoading] = useState(true);
 
     const [
         role,
@@ -82,21 +82,7 @@ export function AuthProvider({
 
                 try {
 
-                    const response =
-                        await fetch(
-                            `${BACKEND_URL}/auth/me`,
-                            {
-                                method: 'GET',
-
-                                credentials:
-                                    'include',
-
-                                headers: {
-                                    Accept:
-                                        'application/json'
-                                }
-                            }
-                        );
+                    const response = await apiFetch('/auth/me');
 
                     if (!response.ok) {
 
@@ -112,7 +98,7 @@ export function AuthProvider({
                     }
 
                     const data =
-                        await response.json();
+                        await parseApiResponse(response);
 
                     setIsAuthenticated(
                         true
@@ -153,6 +139,8 @@ export function AuthProvider({
                     setRole(null);
                     setIdentityType(null);
                     setIdentity(null);
+                } finally {
+                    setIsLoading(false);
                 }
             };
 
@@ -180,15 +168,7 @@ export function AuthProvider({
 
             try {
 
-                await fetch(
-                    `${BACKEND_URL}/auth/logout`,
-                    {
-                        method: 'POST',
-
-                        credentials:
-                            'include'
-                    }
-                );
+                await apiFetch('/auth/logout', { method: 'POST' });
 
             } finally {
 
@@ -215,6 +195,7 @@ export function AuthProvider({
         <AuthContext.Provider
             value={{
                 isAuthenticated,
+                isLoading,
                 role,
                 identityType,
                 identity,

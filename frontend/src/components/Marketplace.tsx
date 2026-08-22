@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import axios from 'axios';
 import GlassCard from './Glasscard';
 import { useFutureLock } from '../hooks/useFutureLock';
+import { apiFetch, parseApiResponse } from '../utils/errorHandler';
 
 export default function Marketplace() {
   const [insights, setInsights] = useState<any[]>([]);
@@ -11,8 +11,8 @@ export default function Marketplace() {
   useEffect(() => {
     const fetchInsights = async () => {
       try {
-        const response = await axios.get('/process.env.NEXT_PUBLIC_BACKEND_URL/api/v1/intel/public');
-        setInsights(response.data);
+        const response = await apiFetch('/api/v1/intel/public');
+        setInsights(await parseApiResponse(response));
       } catch (error) {
         console.error("Failed to fetch insights from FastAPI", error);
       }

@@ -6,9 +6,7 @@ import { ConnectButton } from '@rainbow-me/rainbowkit';
 import {
   LayoutDashboard,
   PlusCircle,
-  Database,
   Store,
-  BarChart3,
   LogOut,
   Moon,
   Sun,
@@ -120,26 +118,10 @@ export default function CreatorSidebar() {
           />
 
           <SidebarLink
-            href="/creator/intelligence"
-            label="My Intelligence"
-            icon={
-              <Database size={19} />
-            }
-          />
-
-          <SidebarLink
             href="/marketplace"
             label="Marketplace"
             icon={
               <Store size={19} />
-            }
-          />
-
-          <SidebarLink
-            href="/creator/performance"
-            label="Performance"
-            icon={
-              <BarChart3 size={19} />
             }
           />
 

@@ -22,6 +22,7 @@ import React, {
   
     const {
       isAuthenticated,
+      isLoading,
       role,
       identity
     } = useAuth();
@@ -31,6 +32,10 @@ import React, {
         return;
       }
   
+      if (isLoading) {
+        return;
+      }
+
       if (!isAuthenticated) {
         router.replace(
           '/login?redirect=/dashboard'
@@ -44,11 +49,13 @@ import React, {
       }
     }, [
       isAuthenticated,
+      isLoading,
       role,
       router
     ]);
   
     if (
+      isLoading ||
       !isAuthenticated ||
       role !== 'Buyer'
     ) {

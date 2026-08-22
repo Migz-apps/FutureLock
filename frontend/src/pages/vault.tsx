@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
 import { ShieldCheck, Trash2, ShieldAlert, ChevronDown, Check } from 'lucide-react';
-import { getErrorMessage } from '../utils/errorHandler';
+import { apiFetch, getErrorMessage, parseApiResponse } from '../utils/errorHandler';
 
 interface VaultItem {
     id: string;
@@ -51,9 +51,9 @@ const Vault = () => {
         const fetchArchive = async () => {
             setLoading(true);
             try {
-                const res = await fetch('/process.env.NEXT_PUBLIC_BACKEND_URL/api/buyer/vault', { credentials: 'include' });
+                const res = await apiFetch('/api/buyer/vault');
                 if (res.ok) {
-                    const data = await res.json();
+                    const data = await parseApiResponse<VaultItem[]>(res);
                     if (isMounted) setVaultList(data);
                 } else {
                     if (isMounted) {

@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
-import axios from 'axios';
 import { Lock, ShieldCheck, Loader2 } from 'lucide-react';
 import { useAccount } from 'wagmi';
 import { getErrorMessage } from '../utils/errorHandler';
+import { apiFetch, parseApiResponse } from '../utils/errorHandler';
 
 export default function CreateLock() {
   const { address } = useAccount();
@@ -18,14 +18,14 @@ export default function CreateLock() {
     e.preventDefault();
     setLoading(true);
     try {
-      // Calling your FastAPI Backend with dynamic address
-      const response = await axios.post('/process.env.NEXT_PUBLIC_BACKEND_URL/api/v1/intel/create', null, {
-        params: {
+      const response = await apiFetch('/api/v1/intel/create', {
+        method: 'POST',
+        body: JSON.stringify({
           ...formData,
-          creator: address || '0x0000000000000000000000000000000000000000'
-        }
+          unlockDate: new Date(formData.unlockDate).toISOString()
+        })
       });
-      setResult(response.data);
+      setResult(await parseApiResponse(response));
     } catch (error) {
       alert(getErrorMessage(error));
     } finally {

@@ -2,11 +2,12 @@ import axios from 'axios';
 import { getErrorMessage, handleAsyncError } from '../utils/errorHandler';
 
 const api = axios.create({
-  baseURL: 'http://localhost:8081/api', // This points to your Spring Boot backend
+  baseURL: (process.env.NEXT_PUBLIC_BACKEND_URL || '').replace(/\/+$/, ''),
   headers: {
     'Content-Type': 'application/json',
   },
   timeout: 10000, // 10 second timeout
+  withCredentials: true,
 });
 
 api.interceptors.request.use(

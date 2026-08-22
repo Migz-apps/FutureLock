@@ -6,9 +6,9 @@ import FutureLockABI from '../abis/FutureLock.json';
 import { getErrorMessage } from '../utils/errorHandler';
 
 // Configuration from environment variables
-const CONTRACT_ADDRESS = (process.env.NEXT_PUBLIC_CONTRACT_ADDRESS || "0x0") as `0x${string}`;
+const CONTRACT_ADDRESS = (process.env.NEXT_PUBLIC_CONTRACT_ADDRESS || "") as `0x${string}`;
 // Unified the variable name to match your .env.local
-const EXPECTED_CHAIN_ID = Number(process.env.NEXT_PUBLIC_CHAIN_ID || 31337);
+const EXPECTED_CHAIN_ID = Number(process.env.NEXT_PUBLIC_CHAIN_ID || 0);
 
 export const useFutureLock = () => {
   const chainId = useChainId();
@@ -21,14 +21,14 @@ export const useFutureLock = () => {
    */
   const purchaseInsight = async (insightId: string, priceInEth: string) => {
     // 1. Network Validation
-    if (chainId !== EXPECTED_CHAIN_ID) {
+    if (!EXPECTED_CHAIN_ID || chainId !== EXPECTED_CHAIN_ID) {
       const errorMsg = getErrorMessage({ message: `Wrong Network! Please switch to Chain ID: ${EXPECTED_CHAIN_ID}` });
       alert(errorMsg);
       return;
     }
 
     // 2. Contract Address Validation
-    if (!CONTRACT_ADDRESS || CONTRACT_ADDRESS === "0x0") {
+    if (!CONTRACT_ADDRESS) {
       const errorMsg = getErrorMessage({ message: "Contract address missing" });
       alert(errorMsg);
       return;

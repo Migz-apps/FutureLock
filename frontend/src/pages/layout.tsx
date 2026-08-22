@@ -20,6 +20,7 @@ export default function Layout({
 
   const {
     isAuthenticated
+    , isLoading
   } = useAuth();
 
   const router = useRouter();
@@ -40,7 +41,9 @@ export default function Layout({
 
       <div className="ambient-background" />
 
-      {showPortal ? (
+      {isLoading && !publicAuthPage ? (
+        <main className="public-main" aria-busy="true" />
+      ) : showPortal ? (
         <>
           <PortalSidebar />
 
