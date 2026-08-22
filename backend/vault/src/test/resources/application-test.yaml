@@ -1,0 +1,22 @@
+spring:
+  r2dbc:
+    url: ${TEST_DB_URL:}
+    username: ${TEST_DB_USERNAME:}
+    password: ${TEST_DB_PASSWORD:}
+  mail:
+    host: localhost
+    port: 2525
+    username: test
+    password: test
+
+app:
+  cors:
+    allowed-origins: https://frontend.test.futurelock.example
+  mail:
+    enabled: false
+  jwt:
+    secret: test-only-secret-that-is-at-least-thirty-two-bytes-long
+    access-token-minutes: 15
+    refresh-token-days: 7
+  security:
+    secure-cookies: true

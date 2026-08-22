@@ -29,8 +29,7 @@ public class EmailService {
 
     public Mono<Void> sendVerificationEmail(String to, String code) {
         if (!mailEnabled) {
-            // Local development only. Never expose the code through the HTTP response.
-            log.warn("MAIL_ENABLED=false. FutureLock verification code for {} is {}", to, code);
+            log.warn("MAIL_ENABLED=false; verification email was not sent to {}.", to);
             return Mono.empty();
         }
 
@@ -43,7 +42,7 @@ public class EmailService {
                     message.setSubject("FutureLock verification code");
                     message.setText(
                             "Your FutureLock verification code is " + code
-                                    + ". It expires in 2 minutes.");
+                                    + ". It expires in 5 minutes.");
                     mailSender.send(message);
                 })
                 .subscribeOn(Schedulers.boundedElastic())

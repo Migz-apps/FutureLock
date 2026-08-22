@@ -15,11 +15,13 @@ C:\Users\user\Downloads\github\FutureLock\backend\vault\src\main\java\com\future
 C:\Users\user\Downloads\github\FutureLock\backend\vault\src\main\java\com\futurelock\vault\dto\UserResponse.java
 C:\Users\user\Downloads\github\FutureLock\backend\vault\src\main\java\com\futurelock\vault\dto\WalletLoginRequest.java
 C:\Users\user\Downloads\github\FutureLock\backend\vault\src\main\java\com\futurelock\vault\exception\GlobalExceptionHandler.java
+C:\Users\user\Downloads\github\FutureLock\backend\vault\src\main\java\com\futurelock\vault\model\EmailVerification.java
 C:\Users\user\Downloads\github\FutureLock\backend\vault\src\main\java\com\futurelock\vault\model\IntelMetadata.java
 C:\Users\user\Downloads\github\FutureLock\backend\vault\src\main\java\com\futurelock\vault\model\PurchaseHistory.java
 C:\Users\user\Downloads\github\FutureLock\backend\vault\src\main\java\com\futurelock\vault\model\Rating.java
 C:\Users\user\Downloads\github\FutureLock\backend\vault\src\main\java\com\futurelock\vault\model\User.java
 C:\Users\user\Downloads\github\FutureLock\backend\vault\src\main\java\com\futurelock\vault\model\VaultItem.java
+C:\Users\user\Downloads\github\FutureLock\backend\vault\src\main\java\com\futurelock\vault\repository\EmailVerificationRepository.java
 C:\Users\user\Downloads\github\FutureLock\backend\vault\src\main\java\com\futurelock\vault\repository\IntelMetadataRepository.java
 C:\Users\user\Downloads\github\FutureLock\backend\vault\src\main\java\com\futurelock\vault\repository\PurchaseHistoryRepository.java
 C:\Users\user\Downloads\github\FutureLock\backend\vault\src\main\java\com\futurelock\vault\repository\RatingRepository.java

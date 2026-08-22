@@ -1,220 +1,91 @@
 package com.futurelock.vault.service;
 
+import com.futurelock.vault.model.EmailVerification;
+import com.futurelock.vault.repository.EmailVerificationRepository;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
 import java.time.Duration;
-import java.time.Instant;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import java.util.Locale;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 @Service
 public class RateLimiterService {
-
     private static final Duration CODE_LIFETIME = Duration.ofMinutes(5);
     private static final Duration REQUEST_WINDOW = Duration.ofHours(1);
     private static final int MAX_REQUESTS_PER_WINDOW = 6;
+    private final EmailVerificationRepository repository;
 
-    private final Map<String, VerificationData> verificationStorage =
-            new ConcurrentHashMap<>();
-
-    private record VerificationData(
-            String code,
-            Instant expiresAt,
-            int requestCount,
-            Instant windowStartedAt,
-            boolean verified
-    ) {
+    public RateLimiterService(EmailVerificationRepository repository) {
+        this.repository = repository;
     }
 
-    /**
-     * Stores a newly generated verification code.
-     *
-     * Calling this again for the same email replaces the previous code
-     * and resets the verified flag.
-     */
-    public Mono<Void> checkLimitAndStore(
-            String rawEmail,
-            String code
-    ) {
-        return Mono.fromRunnable(() -> {
-
-            String email = normalizeEmail(rawEmail);
-
-            if (email.isBlank()) {
-                throw new IllegalArgumentException(
-                        "Email is required."
-                );
-            }
-
-            if (code == null || code.isBlank()) {
-                throw new IllegalArgumentException(
-                        "Verification code is required."
-                );
-            }
-
-            Instant now = Instant.now();
-
-            verificationStorage.compute(email, (key, existing) -> {
-
-                int requestCount = 0;
-                Instant windowStartedAt = now;
-
-                if (existing != null) {
-
-                    boolean windowExpired =
-                            existing.windowStartedAt()
-                                    .plus(REQUEST_WINDOW)
-                                    .isBefore(now);
-
-                    if (!windowExpired) {
-                        requestCount =
-                                existing.requestCount();
-
-                        windowStartedAt =
-                                existing.windowStartedAt();
+    public Mono<Void> checkLimitAndStore(String rawEmail, String code) {
+        String email = normalizeEmail(rawEmail);
+        if (email.isBlank() || code == null || code.isBlank()) {
+            return Mono.error(new IllegalArgumentException("Email and verification code are required."));
+        }
+        OffsetDateTime now = OffsetDateTime.now(ZoneOffset.UTC);
+        return repository.findById(email).defaultIfEmpty(new EmailVerification(
+                        email, "", now, 0, now, false, now, null))
+                .flatMap(existing -> {
+                    boolean resetWindow = existing.windowStartedAt().plus(REQUEST_WINDOW).isBefore(now);
+                    int count = resetWindow ? 0 : existing.requestCount();
+                    if (count >= MAX_REQUESTS_PER_WINDOW) {
+                        return Mono.error(new IllegalStateException("Too many verification requests. Please try again later."));
                     }
-                }
-
-                if (requestCount >= MAX_REQUESTS_PER_WINDOW) {
-                    throw new IllegalStateException(
-                            "Too many verification requests. Please try again later."
-                    );
-                }
-
-                return new VerificationData(
-                        code,
-                        now.plus(CODE_LIFETIME),
-                        requestCount + 1,
-                        windowStartedAt,
-                        false
-                );
-            });
-        });
+                    return repository.save(new EmailVerification(email, hash(code), now.plus(CODE_LIFETIME),
+                            count + 1, resetWindow ? now : existing.windowStartedAt(), false, now, existing.version()));
+                }).then();
     }
 
-    /**
-     * Checks the code without removing the verification record.
-     *
-     * If the code is correct, the same record is updated with
-     * verified=true so the subsequent /auth/signup request can consume it.
-     */
-    public Mono<Boolean> validateCode(
-            String rawEmail,
-            String rawCode
-    ) {
-        return Mono.defer(() -> {
-
-            String email =
-                    normalizeEmail(rawEmail);
-
-            String code =
-                    rawCode == null
-                            ? ""
-                            : rawCode.trim();
-
-            VerificationData data =
-                    verificationStorage.get(email);
-
-            if (data == null) {
-                return Mono.error(
-                        new IllegalArgumentException(
-                                "Code expired or not found. Please request a new one."
-                        )
-                );
-            }
-
-            Instant now = Instant.now();
-
-            if (data.expiresAt().isBefore(now)) {
-
-                verificationStorage.remove(email);
-
-                return Mono.error(
-                        new IllegalArgumentException(
-                                "Verification code has expired. Please request a new one."
-                        )
-                );
-            }
-
-            if (!data.code().equals(code)) {
-                return Mono.just(false);
-            }
-
-            verificationStorage.put(
-                    email,
-                    new VerificationData(
-                            data.code(),
-                            data.expiresAt(),
-                            data.requestCount(),
-                            data.windowStartedAt(),
-                            true
-                    )
-            );
-
-            return Mono.just(true);
-        });
+    public Mono<Boolean> validateCode(String rawEmail, String rawCode) {
+        String email = normalizeEmail(rawEmail);
+        String code = rawCode == null ? "" : rawCode.trim();
+        OffsetDateTime now = OffsetDateTime.now(ZoneOffset.UTC);
+        return repository.findById(email)
+                .switchIfEmpty(Mono.error(new IllegalArgumentException("Code expired or not found. Please request a new one.")))
+                .flatMap(data -> {
+                    if (data.expiresAt().isBefore(now)) {
+                        return repository.deleteById(email).then(Mono.error(new IllegalArgumentException("Verification code has expired. Please request a new code.")));
+                    }
+                    if (!MessageDigest.isEqual(data.codeHash().getBytes(StandardCharsets.UTF_8), hash(code).getBytes(StandardCharsets.UTF_8))) {
+                        return Mono.just(false);
+                    }
+                    return repository.save(new EmailVerification(data.email(), data.codeHash(), data.expiresAt(),
+                            data.requestCount(), data.windowStartedAt(), true, data.createdAt(), data.version())).thenReturn(true);
+                });
     }
 
-    /**
-     * Called immediately before account creation.
-     *
-     * Signup is allowed only after /auth/confirm-code has marked
-     * the email as verified.
-     *
-     * The record is removed only after successful consumption.
-     */
-    public Mono<Void> consumeVerifiedEmail(
-            String rawEmail
-    ) {
-        return Mono.defer(() -> {
-
-            String email =
-                    normalizeEmail(rawEmail);
-
-            VerificationData data =
-                    verificationStorage.get(email);
-
-            if (data == null) {
-                return Mono.error(
-                        new IllegalArgumentException(
-                                "Email verification is required."
-                        )
-                );
-            }
-
-            if (data.expiresAt().isBefore(Instant.now())) {
-
-                verificationStorage.remove(email);
-
-                return Mono.error(
-                        new IllegalArgumentException(
-                                "Email verification has expired. Please request a new code."
-                        )
-                );
-            }
-
-            if (!data.verified()) {
-                return Mono.error(
-                        new IllegalArgumentException(
-                                "Please verify your email before creating the account."
-                        )
-                );
-            }
-
-            verificationStorage.remove(email);
-
-            return Mono.empty();
-        });
+    public Mono<Void> requireVerifiedEmail(String rawEmail) {
+        String email = normalizeEmail(rawEmail);
+        OffsetDateTime now = OffsetDateTime.now(ZoneOffset.UTC);
+        return repository.findById(email)
+                .switchIfEmpty(Mono.error(new IllegalArgumentException("Email verification is required.")))
+                .flatMap(data -> {
+                    if (data.expiresAt().isBefore(now)) {
+                        return repository.deleteById(email).then(Mono.error(new IllegalArgumentException("Email verification has expired. Please request a new code.")));
+                    }
+                    return data.verified() ? Mono.empty() : Mono.error(new IllegalArgumentException("Please verify your email before creating the account."));
+                });
     }
 
-    private String normalizeEmail(
-            String email
-    ) {
-        return email == null
-                ? ""
-                : email.trim()
-                .toLowerCase(Locale.ROOT);
+    public Mono<Void> consumeVerifiedEmail(String rawEmail) {
+        return repository.deleteById(normalizeEmail(rawEmail));
+    }
+
+    private String hash(String value) {
+        try {
+            return java.util.HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256").digest(value.getBytes(StandardCharsets.UTF_8)));
+        } catch (Exception ex) {
+            throw new IllegalStateException("Unable to secure verification code.", ex);
+        }
+    }
+
+    private String normalizeEmail(String email) {
+        return email == null ? "" : email.trim().toLowerCase(Locale.ROOT);
     }
 }

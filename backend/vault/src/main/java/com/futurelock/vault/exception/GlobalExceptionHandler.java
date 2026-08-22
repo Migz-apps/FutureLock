@@ -8,6 +8,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.bind.support.WebExchangeBindException;
+import org.springframework.web.server.ResponseStatusException;
 import reactor.core.publisher.Mono;
 
 import java.util.LinkedHashMap;
@@ -53,8 +54,16 @@ public class GlobalExceptionHandler {
     public Mono<ResponseEntity<Map<String, String>>> handleConflict(
             IllegalStateException ex) {
 
-        return Mono.just(ResponseEntity.status(HttpStatus.CONFLICT)
+        HttpStatus status = safeMessage(ex).startsWith("Too many verification requests")
+                ? HttpStatus.TOO_MANY_REQUESTS : HttpStatus.CONFLICT;
+        return Mono.just(ResponseEntity.status(status)
                 .body(Map.of("message", safeMessage(ex))));
+    }
+
+    @ExceptionHandler(ResponseStatusException.class)
+    public Mono<ResponseEntity<Map<String, String>>> handleStatus(ResponseStatusException ex) {
+        return Mono.just(ResponseEntity.status(ex.getStatusCode())
+                .body(Map.of("message", ex.getReason() == null ? "Request failed." : ex.getReason())));
     }
 
     @ExceptionHandler(DataIntegrityViolationException.class)

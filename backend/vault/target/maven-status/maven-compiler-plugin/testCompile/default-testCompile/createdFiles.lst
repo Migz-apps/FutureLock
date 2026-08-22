@@ -1,1 +1,11 @@
+com\futurelock\vault\service\AuthServiceTest.class
+com\futurelock\vault\service\JwtServiceTest.class
 com\futurelock\vault\VaultApplicationTests.class
+com\futurelock\vault\security\SecurityEndpointTest.class
+com\futurelock\vault\service\RateLimiterServiceTest.class
+com\futurelock\vault\security\SecurityEndpointTest$ProbeController.class
+com\futurelock\vault\security\SecurityEndpointTest$TestJwtConfiguration.class
+com\futurelock\vault\integration\AuthApiDatabaseIntegrationTest.class
+com\futurelock\vault\integration\DatabaseIntegrationSafetyTest.class
+com\futurelock\vault\repository\PersistenceMappingContractTest.class
+com\futurelock\vault\controller\AuthControllerTest.class

@@ -1,6 +1,7 @@
 package com.futurelock.vault.model;
 
 import org.springframework.data.annotation.Id;
+import org.springframework.data.annotation.Version;
 import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.Table;
 
@@ -23,6 +24,10 @@ public record PurchaseHistory(
         String transactionHash,
 
         @Column("purchase_date")
-        OffsetDateTime purchaseDate
+        OffsetDateTime purchaseDate,
+
+        @Version
+        @Column("version")
+        Long version
 ) {
 }

@@ -1,6 +1,7 @@
 package com.futurelock.vault.model;
 
 import org.springframework.data.annotation.Id;
+import org.springframework.data.annotation.Version;
 import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.Table;
 
@@ -12,8 +13,10 @@ public record User(
         @Id
         UUID id,
 
+        @Column("username")
         String username,
 
+        @Column("email")
         String email,
 
         @Column("hashed_password")
@@ -22,6 +25,7 @@ public record User(
         @Column("wallet_address")
         String walletAddress,
 
+        @Column("role")
         String role,
 
         @Column("trust_score")
@@ -37,6 +41,10 @@ public record User(
         Double totalWeightSum,
 
         @Column("secret_salt")
-        String secretSalt
+        String secretSalt,
+
+        @Version
+        @Column("version")
+        Long version
 ) {
 }

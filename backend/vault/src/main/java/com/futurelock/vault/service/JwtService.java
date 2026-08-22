@@ -32,22 +32,24 @@ public class JwtService {
         this.refreshTokenMillis = Duration.ofDays(refreshTokenDays).toMillis();
     }
 
-    public String generateAccessToken(String subject) {
+    public String generateAccessToken(String subject, String role) {
         long now = System.currentTimeMillis();
 
         return Jwts.builder()
                 .subject(subject)
+                .claim("role", role)
                 .issuedAt(new Date(now))
                 .expiration(new Date(now + accessTokenMillis))
                 .signWith(key)
                 .compact();
     }
 
-    public String generateRefreshToken(String subject) {
+    public String generateRefreshToken(String subject, String role) {
         long now = System.currentTimeMillis();
 
         return Jwts.builder()
                 .subject(subject)
+                .claim("role", role)
                 .claim("refresh", true)
                 .issuedAt(new Date(now))
                 .expiration(new Date(now + refreshTokenMillis))
@@ -63,6 +65,18 @@ public class JwtService {
         try {
             Boolean refresh = parseClaims(token).get("refresh", Boolean.class);
             return Boolean.TRUE.equals(refresh);
+        } catch (Exception ex) {
+            return false;
+        }
+    }
+
+    public String extractRole(String token) {
+        return parseClaims(token).get("role", String.class);
+    }
+
+    public boolean isAccessToken(String token) {
+        try {
+            return !Boolean.TRUE.equals(parseClaims(token).get("refresh", Boolean.class));
         } catch (Exception ex) {
             return false;
         }

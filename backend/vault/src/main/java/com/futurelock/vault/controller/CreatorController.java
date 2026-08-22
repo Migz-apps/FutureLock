@@ -5,7 +5,6 @@ import com.futurelock.vault.model.PurchaseHistory;
 import com.futurelock.vault.repository.IntelMetadataRepository;
 import com.futurelock.vault.repository.PurchaseHistoryRepository;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -36,8 +35,7 @@ public class CreatorController {
     }
 
     @GetMapping("/analytics")
-    public Mono<Map<String, Object>> getCreatorAnalytics(@AuthenticationPrincipal Jwt jwt) {
-        String identity = jwt != null ? jwt.getSubject() : "dummy_creator"; // Ideally query User to get actual username/wallet
+    public Mono<Map<String, Object>> getCreatorAnalytics(@AuthenticationPrincipal String identity) {
 
         return intelRepo.findByCreator(identity)
                 .collectList()
@@ -58,7 +56,7 @@ public class CreatorController {
                                         "active_locks", insights.stream().map(ins -> Map.of(
                                                 "id", ins.id(),
                                                 "title", ins.title(),
-                                                "release_date", ins.createdAt() != null ? ins.createdAt().plusDays(ins.unlockDays()) : null
+                                                "release_date", ins.createdAt().plusDays(ins.unlockDays())
                                         )).collect(Collectors.toList())
                                 );
                             });

@@ -13,6 +13,8 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
+import org.springframework.http.HttpStatus;
 
 import reactor.core.publisher.Mono;
 
@@ -32,6 +34,12 @@ public class AuthController {
 
     @Value("${app.security.secure-cookies:false}")
     private boolean secureCookies;
+
+    @Value("${app.jwt.access-token-minutes:15}")
+    private long accessTokenMinutes;
+
+    @Value("${app.jwt.refresh-token-days:7}")
+    private long refreshTokenDays;
 
     public AuthController(
             AuthService authService,
@@ -157,21 +165,18 @@ public class AuthController {
         String email = normalizeEmail(data.email());
 
         return rateLimiterService
-                .consumeVerifiedEmail(email)
-                .then(
-                        authService.signup(
+                .requireVerifiedEmail(email)
+                .then(authService.signup(
                                 data.username(),
                                 email,
                                 data.password(),
                                 data.role()
-                        )
-                )
-                .map(user ->
-                        authenticatedResponse(
+                        ))
+                .flatMap(user -> rateLimiterService.consumeVerifiedEmail(email)
+                        .thenReturn(authenticatedResponse(
                                 user,
                                 "Signup successful"
-                        )
-                );
+                        )));
     }
 
     // =========================================================
@@ -230,11 +235,7 @@ public class AuthController {
             String accessToken
     ) {
         if (accessToken.isBlank()) {
-            return Mono.error(
-                    new IllegalArgumentException(
-                            "Not authenticated."
-                    )
-            );
+            return Mono.error(new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Authentication required."));
         }
 
         String subject;
@@ -242,11 +243,7 @@ public class AuthController {
         try {
             subject = jwtService.extractSubject(accessToken);
         } catch (Exception ex) {
-            return Mono.error(
-                    new IllegalArgumentException(
-                            "Session expired or invalid."
-                    )
-            );
+            return Mono.error(new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Session expired or invalid."));
         }
 
         return findUserByIdentity(subject)
@@ -277,11 +274,7 @@ public class AuthController {
                         )
                 )
                 .switchIfEmpty(
-                        Mono.error(
-                                new IllegalArgumentException(
-                                        "User not found."
-                                )
-                        )
+                        Mono.error(new ResponseStatusException(HttpStatus.UNAUTHORIZED, "User not found."))
                 );
     }
 
@@ -337,9 +330,7 @@ public class AuthController {
                 .map(user -> {
 
                     String access =
-                            jwtService.generateAccessToken(
-                                    identity(user)
-                            );
+                            jwtService.generateAccessToken(identity(user), user.role());
 
                     HttpHeaders headers =
                             new HttpHeaders();
@@ -413,14 +404,10 @@ public class AuthController {
                 identity(user);
 
         String access =
-                jwtService.generateAccessToken(
-                        identifier
-                );
+                jwtService.generateAccessToken(identifier, user.role());
 
         String refresh =
-                jwtService.generateRefreshToken(
-                        identifier
-                );
+                jwtService.generateRefreshToken(identifier, user.role());
 
         HttpHeaders headers =
                 new HttpHeaders();
@@ -478,7 +465,7 @@ public class AuthController {
                 )
                 .path("/")
                 .maxAge(
-                        Duration.ofMinutes(15)
+                        Duration.ofMinutes(accessTokenMinutes)
                 )
                 .build();
     }
@@ -500,7 +487,7 @@ public class AuthController {
                 )
                 .path("/")
                 .maxAge(
-                        Duration.ofDays(7)
+                        Duration.ofDays(refreshTokenDays)
                 )
                 .build();
     }

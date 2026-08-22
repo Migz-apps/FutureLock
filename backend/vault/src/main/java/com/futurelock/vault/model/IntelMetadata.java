@@ -16,8 +16,10 @@ public record IntelMetadata(
         @Id
         UUID id,
 
+        @Column("title")
         String title,
 
+        @Column("description")
         String description,
 
         @JsonFormat(shape = JsonFormat.Shape.STRING)
@@ -27,8 +29,10 @@ public record IntelMetadata(
         @Column("price_usd")
         BigDecimal priceUSD,
 
+        @Column("category")
         String category,
 
+        @Column("creator")
         String creator,
 
         @Column("unlock_days")
@@ -44,6 +48,7 @@ public record IntelMetadata(
         OffsetDateTime createdAt,
 
         @Version
+        @Column("version")
         Long version
 ) {
 }

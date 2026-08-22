@@ -1,6 +1,7 @@
 package com.futurelock.vault.model;
 
 import org.springframework.data.annotation.Id;
+import org.springframework.data.annotation.Version;
 import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.Table;
 
@@ -19,12 +20,17 @@ public record Rating(
         @Column("intel_id")
         UUID intelId,
 
+        @Column("score")
         Integer score,
 
         @Column("is_dispute")
         Boolean isDispute,
 
         @Column("rated_at")
-        OffsetDateTime ratedAt
+        OffsetDateTime ratedAt,
+
+        @Version
+        @Column("version")
+        Long version
 ) {
 }

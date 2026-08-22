@@ -25,6 +25,8 @@ CREATE TABLE IF NOT EXISTS users (
 
     secret_salt VARCHAR(255) NOT NULL,
 
+    version BIGINT NOT NULL DEFAULT 0,
+
     CONSTRAINT users_identity_required CHECK (
         email IS NOT NULL
         OR wallet_address IS NOT NULL
@@ -113,6 +115,8 @@ CREATE TABLE IF NOT EXISTS purchase_history (
 
     purchase_date TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
+    version BIGINT NOT NULL DEFAULT 0,
+
     CONSTRAINT fk_purchase_history_user
         FOREIGN KEY (user_id)
         REFERENCES users(id)
@@ -157,6 +161,8 @@ CREATE TABLE IF NOT EXISTS ratings (
 
     rated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
+    version BIGINT NOT NULL DEFAULT 0,
+
     CONSTRAINT fk_ratings_user
         FOREIGN KEY (user_id)
         REFERENCES users(id)
@@ -189,3 +195,21 @@ CREATE INDEX IF NOT EXISTS idx_ratings_dispute
 
 CREATE INDEX IF NOT EXISTS idx_ratings_date
     ON ratings(rated_at);
+
+-- Persistent verification state survives Render restarts. Codes are SHA-256 hashes,
+-- expire after five minutes, and are deleted only after a successful signup.
+CREATE TABLE IF NOT EXISTS email_verifications (
+    email VARCHAR(320) PRIMARY KEY,
+    code_hash VARCHAR(64) NOT NULL,
+    expires_at TIMESTAMPTZ NOT NULL,
+    request_count INTEGER NOT NULL DEFAULT 0,
+    window_started_at TIMESTAMPTZ NOT NULL,
+    verified BOOLEAN NOT NULL DEFAULT FALSE,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    version BIGINT NOT NULL DEFAULT 0
+);
+
+ALTER TABLE users ADD COLUMN IF NOT EXISTS version BIGINT NOT NULL DEFAULT 0;
+ALTER TABLE purchase_history ADD COLUMN IF NOT EXISTS version BIGINT NOT NULL DEFAULT 0;
+ALTER TABLE ratings ADD COLUMN IF NOT EXISTS version BIGINT NOT NULL DEFAULT 0;
+ALTER TABLE email_verifications ADD COLUMN IF NOT EXISTS version BIGINT NOT NULL DEFAULT 0;

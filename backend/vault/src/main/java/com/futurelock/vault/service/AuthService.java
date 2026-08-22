@@ -5,6 +5,8 @@ import com.futurelock.vault.repository.UserRepository;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
 import reactor.core.publisher.Mono;
 
 import java.util.UUID;
@@ -56,7 +58,8 @@ public class AuthService {
                                             0L,
                                             0.0,
                                             0.0,
-                                            UUID.randomUUID().toString());
+                                            UUID.randomUUID().toString(),
+                                            null);
 
                                     return userRepository.save(newUser);
                                 })));
@@ -70,7 +73,7 @@ public class AuthService {
                         && password != null
                         && passwordEncoder.matches(password, user.hashedPassword()))
                 .switchIfEmpty(Mono.error(
-                        new IllegalArgumentException("Incorrect email or password.")));
+                        new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Incorrect email or password.")));
     }
 
     public Mono<User> walletLogin(String walletAddress, String username, String role) {
@@ -104,7 +107,8 @@ public class AuthService {
                                         0L,
                                         0.0,
                                         0.0,
-                                        UUID.randomUUID().toString());
+                                        UUID.randomUUID().toString(),
+                                        null);
 
                                 return userRepository.save(newUser);
                             }));
